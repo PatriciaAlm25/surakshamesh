@@ -1,222 +1,481 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   MapPin, 
   ShieldCheck, 
-  BarChart2, 
   AlertTriangle, 
   Building, 
   BookOpen, 
-  Users, 
-  Info,
-  Calendar
+  Activity, 
+  RefreshCw, 
+  Database, 
+  Filter, 
+  Flame,
+  Globe,
+  Radio,
+  School,
+  Sparkles
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
-  Cell 
-} from 'recharts';
+import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import { StorageService } from '../../services/storageService';
 
-const REGIONAL_ZONES = [
-  { id: 'mum-north', name: 'Western Zone / Mumbai Metro', schoolsCount: 42, reportsCount: 14, safetyScore: 82, dominantThreat: 'Online Grooming & Secrecy', riskLevel: 'HIGH', lat: 19.0760, lng: 72.8777 },
-  { id: 'pune-east', name: 'Pune East Academic Hub', schoolsCount: 28, reportsCount: 9, safetyScore: 86, dominantThreat: 'Cyberbullying & Defamation', riskLevel: 'MEDIUM', lat: 18.5204, lng: 73.8567 },
-  { id: 'goa-coast', name: 'Goa Coastal Schools Zone', schoolsCount: 19, reportsCount: 4, safetyScore: 94, dominantThreat: 'Gaming Scams & Phishing', riskLevel: 'LOW', lat: 15.2993, lng: 74.1240 },
-  { id: 'blr-south', name: 'Bengaluru Tech Corridor', schoolsCount: 35, reportsCount: 8, safetyScore: 88, dominantThreat: 'Identity Harvesting & Doxxing', riskLevel: 'MEDIUM', lat: 12.9716, lng: 77.5946 },
-  { id: 'delhi-ncr', name: 'Delhi NCR District Zone', schoolsCount: 50, reportsCount: 19, safetyScore: 78, dominantThreat: 'Harassment & Coercion', riskLevel: 'HIGH', lat: 28.7041, lng: 77.1025 }
+// ============================================================================
+// COARSE REGION-LEVEL GEOLOCATION MAPPING (INDIA)
+// Strict Zero-PII Policy: Coarse region centers only, never individual child locations.
+// ============================================================================
+const COARSE_REGIONS = {
+  'Mumbai Metro': { lat: 19.0760, lng: 72.8777, name: 'Mumbai Metro' },
+  'Pune Academic Zone': { lat: 18.5204, lng: 73.8567, name: 'Pune Academic Zone' },
+  'Goa Coastal Zone': { lat: 15.2993, lng: 74.1240, name: 'Goa Coastal Zone' },
+  'Delhi NCR Zone': { lat: 28.7041, lng: 77.1025, name: 'Delhi NCR Zone' },
+  'Bengaluru Tech Corridor': { lat: 12.9716, lng: 77.5946, name: 'Bengaluru Tech Corridor' },
+  'Hyderabad Zone': { lat: 17.3850, lng: 78.4867, name: 'Hyderabad Zone' },
+  'Chennai Metro': { lat: 13.0827, lng: 80.2707, name: 'Chennai Metro' },
+  'Kolkata Region': { lat: 22.5726, lng: 88.3639, name: 'Kolkata Region' },
+  'General': { lat: 20.5937, lng: 78.9629, name: 'Central India Zone' }
+};
+
+// Fallback seed cases if DB empty
+const SEED_CASES = [
+  {
+    case_id: 'c101',
+    report_text: 'Someone named Alex asked me not to tell my parents about our chats and asked for private photos of me in my room.',
+    platform: 'Instagram Direct',
+    region: 'Mumbai Metro',
+    school_name: 'St. Jude International Academy',
+    risk_score: 94
+  },
+  {
+    case_id: 'c102',
+    report_text: 'Classmates created a Discord server sharing edited abusive photos and threatening to make everyone hate me at school.',
+    platform: 'Discord Server',
+    region: 'Pune Academic Zone',
+    school_name: 'Delhi Public School, Pune',
+    risk_score: 82
+  },
+  {
+    case_id: 'c103',
+    report_text: 'Anonymous account threatening to leak my private photos to all my friends unless I pay money or send more pictures.',
+    platform: 'WhatsApp',
+    region: 'Mumbai Metro',
+    school_name: 'Ryan International School',
+    risk_score: 96
+  },
+  {
+    case_id: 'c104',
+    report_text: 'Free reward link offered free Robux but asked for my login password and exact school location.',
+    platform: 'Roblox Chat',
+    region: 'Goa Coastal Zone',
+    school_name: 'Sharada Mandir High School',
+    risk_score: 64
+  },
+  {
+    case_id: 'c105',
+    report_text: 'Cyberbullying group created targeting 9th grade students with fake profiles.',
+    platform: 'Instagram Direct',
+    region: 'Delhi NCR Zone',
+    school_name: 'Modern School, Barakhamba',
+    risk_score: 88
+  },
+  {
+    case_id: 'c106',
+    report_text: 'Doxxing threats and location leaks via gaming chat server.',
+    platform: 'Discord Server',
+    region: 'Bengaluru Tech Corridor',
+    school_name: 'National Public School, Indiranagar',
+    risk_score: 76
+  }
 ];
 
-const CATEGORY_DATA = [
-  { name: 'Grooming', count: 38, color: '#ef4444' },
-  { name: 'Bullying', count: 29, color: '#f59e0b' },
-  { name: 'Phishing', count: 18, color: '#38bdf8' },
-  { name: 'Doxxing', count: 12, color: '#c084fc' },
-  { name: 'Other', count: 6, color: '#94a3b8' }
-];
+// Helper to determine dominant threat cluster
+function getThreatCluster(text = '') {
+  const lower = text.toLowerCase();
+  if (lower.includes('blackmail') || lower.includes('extort') || lower.includes('leak') || lower.includes('pay') || lower.includes('money')) {
+    return 'Blackmail & Sextortion';
+  }
+  if (lower.includes('secret') || lower.includes('tell') || lower.includes('parent') || lower.includes('room') || lower.includes('photo')) {
+    return 'Online Grooming';
+  }
+  if (lower.includes('bull') || lower.includes('hate') || lower.includes('server') || lower.includes('group') || lower.includes('edited')) {
+    return 'Cyberbullying & Harassment';
+  }
+  return 'Phishing, Scams & Privacy Abuse';
+}
 
-const MONTHLY_TRENDS = [
-  { month: 'Apr', reports: 12, resolved: 10 },
-  { month: 'May', reports: 19, resolved: 16 },
-  { month: 'Jun', reports: 15, resolved: 14 },
-  { month: 'Jul', reports: 26, resolved: 22 },
-  { month: 'Aug', reports: 31, resolved: 27 },
-  { month: 'Sep', reports: 22, resolved: 20 }
-];
+// Risk Color Code Helper: Red = high (>=85% or avg >=75), Orange = medium (70-84%), Yellow = moderate (45-69%), Green = low (<45%)
+function getRiskDetails(avgRisk = 50) {
+  if (avgRisk >= 85) return { color: '#ef4444', label: 'CRITICAL RISK', bg: 'rgba(239, 68, 68, 0.18)', border: '#ef4444' };
+  if (avgRisk >= 70) return { color: '#f97316', label: 'HIGH RISK', bg: 'rgba(249, 115, 22, 0.18)', border: '#f97316' };
+  if (avgRisk >= 45) return { color: '#eab308', label: 'MODERATE RISK', bg: 'rgba(234, 179, 8, 0.18)', border: '#eab308' };
+  return { color: '#10b981', label: 'LOW RISK', bg: 'rgba(16, 185, 129, 0.18)', border: '#10b981' };
+}
 
 export default function SafeSchoolDashboard({ setActiveTab }) {
-  const [selectedZone, setSelectedZone] = useState(REGIONAL_ZONES[0]);
+  const [cases, setCases] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dbSource, setDbSource] = useState('Supabase Live DB');
+  const [selectedRegion, setSelectedRegion] = useState(null);
+
+  // Load cases from Supabase
+  const fetchMapData = async () => {
+    setLoading(true);
+    const data = await StorageService.fetchSupabaseCases();
+    if (data && data.length > 0) {
+      setCases(data);
+      setDbSource('Supabase Live Database');
+    } else {
+      setCases(SEED_CASES);
+      setDbSource('Demo Seed Cases');
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchMapData();
+  }, []);
+
+  // Aggregate cases by coarse region
+  const regionHeatmapData = useMemo(() => {
+    const map = new Map();
+
+    // Group cases into coarse regions
+    cases.forEach(c => {
+      let regKey = c.region || 'General';
+      
+      // Match key or find fuzzy match
+      const matchedKey = Object.keys(COARSE_REGIONS).find(
+        k => k.toLowerCase() === regKey.toLowerCase() || regKey.toLowerCase().includes(k.toLowerCase())
+      ) || 'General';
+
+      if (!map.has(matchedKey)) {
+        const coords = COARSE_REGIONS[matchedKey];
+        map.set(matchedKey, {
+          regionKey: matchedKey,
+          name: coords.name,
+          lat: coords.lat,
+          lng: coords.lng,
+          caseCount: 0,
+          totalRisk: 0,
+          maxRisk: 0,
+          clusters: {},
+          platforms: {},
+          schoolsSet: new Set(),
+          casesList: []
+        });
+      }
+
+      const rObj = map.get(matchedKey);
+      const risk = c.risk_score || 50;
+      const cluster = getThreatCluster(c.report_text || '');
+      const platform = c.platform || 'Direct';
+
+      rObj.caseCount += 1;
+      rObj.totalRisk += risk;
+      rObj.maxRisk = Math.max(rObj.maxRisk, risk);
+      rObj.clusters[cluster] = (rObj.clusters[cluster] || 0) + 1;
+      rObj.platforms[platform] = (rObj.platforms[platform] || 0) + 1;
+
+      if (c.school_name && c.school_name !== 'General / Unspecified') {
+        rObj.schoolsSet.add(c.school_name);
+      }
+      rObj.casesList.push(c);
+    });
+
+    // Compute final aggregated metrics
+    const results = Array.from(map.values()).map(r => {
+      const avgRisk = Math.round(r.totalRisk / (r.caseCount || 1));
+      
+      // Find dominant cluster
+      let dominantCluster = 'Online Grooming';
+      let maxC = 0;
+      Object.entries(r.clusters).forEach(([cName, count]) => {
+        if (count > maxC) {
+          maxC = count;
+          dominantCluster = cName;
+        }
+      });
+
+      // Find common platform
+      let commonPlatform = 'Instagram Direct';
+      let maxP = 0;
+      Object.entries(r.platforms).forEach(([pName, count]) => {
+        if (count > maxP) {
+          maxP = count;
+          commonPlatform = pName;
+        }
+      });
+
+      const riskDetails = getRiskDetails(avgRisk);
+
+      return {
+        ...r,
+        avgRisk,
+        dominantCluster,
+        commonPlatform,
+        riskDetails,
+        schools: Array.from(r.schoolsSet)
+      };
+    });
+
+    return results;
+  }, [cases]);
+
+  // Set default selected region when data changes
+  useEffect(() => {
+    if (regionHeatmapData.length > 0 && (!selectedRegion || !regionHeatmapData.find(r => r.regionKey === selectedRegion.regionKey))) {
+      setSelectedRegion(regionHeatmapData[0]);
+    }
+  }, [regionHeatmapData]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
       
-      {/* Header */}
+      {/* Top Banner Header */}
       <div className="glass-panel" style={{ padding: '22px 28px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <h2 style={{ fontSize: '1.4rem' }}>🗺️ SafeSchool Regional Safety Heatmap</h2>
-            <span className="badge-cyan">Zero-PII Aggregated Intelligence</span>
+            <h2 style={{ fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
+              <Flame color="#ef4444" size={24} /> SafeSchool India Threat Heatmap
+            </h2>
+            <span className="badge-purple" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Database size={12} /> Supabase `cases` Table
+            </span>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Zone-level safety metrics to help school principals, counsellors, and education departments deploy proactive cyber workshops.
+            Coarse region-level heat intensity derived from aggregated risk scores. <strong style={{ color: '#38bdf8' }}>Strict Zero-PII Policy:</strong> Coarse coordinates only, individual child locations are never displayed.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <span className="badge-safe">🛡️ Zero Child Names</span>
-          <span className="badge-purple">Coarse Geolocation Only</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <span className="badge-cyan" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Radio size={12} className="animate-pulse" /> {dbSource}
+          </span>
+
+          <button 
+            className="btn-secondary" 
+            style={{ padding: '8px 14px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={fetchMapData}
+            disabled={loading}
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh Heatmap
+          </button>
         </div>
       </div>
 
-      {/* Map & District List Grid */}
+      {/* Main Heatmap Grid: Leaflet Map (Left) + Region Detail Panel (Right) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '20px' }}>
         
-        {/* District Zones Selector / Heatmap Map View */}
-        <div className="glass-panel" style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={18} color="#38bdf8" /> Regional Safety Index (India)
-            </h3>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Updated: Sep 2026</span>
-          </div>
-
-          {/* Regional Cards List */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
-            {REGIONAL_ZONES.map((zone) => {
-              const isSelected = selectedZone.id === zone.id;
-              return (
-                <div
-                  key={zone.id}
-                  onClick={() => setSelectedZone(zone)}
-                  style={{
-                    padding: '14px',
-                    borderRadius: '12px',
-                    background: isSelected ? 'rgba(56, 189, 248, 0.15)' : 'rgba(15, 23, 42, 0.7)',
-                    border: isSelected ? '2px solid #38bdf8' : '1px solid var(--border-subtle)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '6px'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ fontSize: '0.88rem', color: isSelected ? '#38bdf8' : 'var(--text-primary)' }}>
-                      {zone.name}
-                    </strong>
-                    <span className={zone.riskLevel === 'HIGH' ? 'badge-danger' : (zone.riskLevel === 'MEDIUM' ? 'badge-warning' : 'badge-safe')} style={{ fontSize: '0.65rem' }}>
-                      {zone.riskLevel}
-                    </span>
-                  </div>
-
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    Dominant: <strong style={{ color: '#cbd5e1' }}>{zone.dominantThreat}</strong>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    <span>{zone.schoolsCount} Affiliated Schools</span>
-                    <span style={{ color: '#34d399', fontWeight: 600 }}>Score: {zone.safetyScore}/100</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Monthly Trends Bar Chart */}
-          <div style={{ marginTop: '10px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '10px' }}>
-              📊 Incident Resolution Velocity (Last 6 Months)
+        {/* Leaflet Heatmap Canvas Container */}
+        <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 700, color: '#f8fafc' }}>
+              <MapPin size={18} color="#38bdf8" /> Coarse Region Heat Map (India)
             </div>
-
-            <div style={{ width: '100%', height: 160 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={MONTHLY_TRENDS}>
-                  <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
-                  <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #38bdf8', borderRadius: '8px', fontSize: '0.75rem' }} />
-                  <Bar dataKey="reports" fill="#ef4444" name="Incoming Alerts" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="resolved" fill="#10b981" name="Protected & Resolved" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            
+            {/* Heat Intensity Color Legend */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.72rem' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ef4444', fontWeight: 700 }}>
+                ● Critical (≥85)
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f97316', fontWeight: 700 }}>
+                ● High (70-84)
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#eab308', fontWeight: 700 }}>
+                ● Moderate (45-69)
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', fontWeight: 700 }}>
+                ● Low (&lt;45)
+              </span>
             </div>
           </div>
+
+          {/* Interactive Leaflet React Map */}
+          <div style={{ height: '520px', width: '100%', borderRadius: '14px', overflow: 'hidden', border: '1px solid var(--border-subtle)', position: 'relative' }}>
+            {loading ? (
+              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', background: '#030712', color: 'var(--text-muted)' }}>
+                <RefreshCw className="animate-spin" size={32} color="#38bdf8" />
+                <span>Aggregating Supabase region scores into heatmap...</span>
+              </div>
+            ) : (
+              <MapContainer 
+                center={[20.5937, 78.9629]} 
+                zoom={5} 
+                scrollWheelZoom={true} 
+                style={{ height: '100%', width: '100%', background: '#090d16' }}
+              >
+                {/* Sleek Dark Mode Map Tiles (100% Free, Zero API Key Required) */}
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://www.esri.com/">Esri</a>'
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+                />
+
+                {/* Heatmap Region Circles */}
+                {regionHeatmapData.map((reg) => {
+                  const isSelected = selectedRegion?.regionKey === reg.regionKey;
+                  const radius = Math.max(22, 18 + reg.caseCount * 6);
+
+                  return (
+                    <React.Fragment key={reg.regionKey}>
+                      
+                      {/* Outer Heat Glow Aura */}
+                      <CircleMarker
+                        center={[reg.lat, reg.lng]}
+                        radius={radius + 12}
+                        pathOptions={{
+                          fillColor: reg.riskDetails.color,
+                          fillOpacity: isSelected ? 0.35 : 0.18,
+                          stroke: false
+                        }}
+                      />
+
+                      {/* Main Coarse Region Marker */}
+                      <CircleMarker
+                        center={[reg.lat, reg.lng]}
+                        radius={radius}
+                        pathOptions={{
+                          fillColor: reg.riskDetails.color,
+                          fillOpacity: 0.75,
+                          color: isSelected ? '#ffffff' : reg.riskDetails.border,
+                          weight: isSelected ? 3 : 1.5
+                        }}
+                        eventHandlers={{
+                          click: () => setSelectedRegion(reg)
+                        }}
+                      >
+                        <Tooltip direction="top" offset={[0, -10]} opacity={0.95}>
+                          <div style={{ background: '#0f172a', color: '#f8fafc', padding: '6px 10px', borderRadius: '6px', border: `1px solid ${reg.riskDetails.color}`, fontSize: '0.78rem' }}>
+                            <strong>{reg.name}</strong>
+                            <div>Avg Risk: <span style={{ color: reg.riskDetails.color, fontWeight: 800 }}>{reg.avgRisk}%</span></div>
+                            <div>Active Cases: {reg.caseCount}</div>
+                          </div>
+                        </Tooltip>
+
+                        <Popup>
+                          <div style={{ color: '#0f172a', fontSize: '0.82rem' }}>
+                            <strong style={{ fontSize: '0.9rem' }}>{reg.name}</strong><br />
+                            <strong>Avg Risk:</strong> {reg.avgRisk}% ({reg.riskDetails.label})<br />
+                            <strong>Total Reports:</strong> {reg.caseCount}<br />
+                            <strong>Dominant Threat:</strong> {reg.dominantCluster}
+                          </div>
+                        </Popup>
+                      </CircleMarker>
+
+                    </React.Fragment>
+                  );
+                })}
+
+              </MapContainer>
+            )}
+
+            {/* Floating Info Overlay */}
+            <div style={{ position: 'absolute', bottom: '12px', left: '12px', zIndex: 1000, background: 'rgba(7, 11, 22, 0.92)', backdropFilter: 'blur(8px)', padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--border-subtle)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              Click any regional circle to inspect risk metrics and affiliated schools.
+            </div>
+
+          </div>
+
         </div>
 
-        {/* Selected Zone Deep Dive & Preventive Toolkit */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        {/* Selected Region Detailed Metrics & School Panel (Right) */}
+        <div className="glass-panel" style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
           
-          {/* Zone Detail Card */}
-          <div className="glass-panel" style={{ padding: '22px', borderLeft: '3px solid #38bdf8' }}>
-            <span className="badge-cyan" style={{ fontSize: '0.7rem', marginBottom: '6px' }}>
-              Selected Zone Profile
-            </span>
-            <h3 style={{ fontSize: '1.2rem', color: '#38bdf8' }}>{selectedZone.name}</h3>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '14px', fontSize: '0.82rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
-                <span style={{ color: 'var(--text-muted)' }}>School Safety Index:</span>
-                <strong style={{ color: '#34d399' }}>{selectedZone.safetyScore}% Safe</strong>
+          {selectedRegion ? (
+            <>
+              <div>
+                <span className="badge-cyan" style={{ fontSize: '0.7rem', marginBottom: '6px', display: 'inline-block' }}>
+                  Regional Intelligence Profile
+                </span>
+                
+                <h3 style={{ fontSize: '1.25rem', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                  <Globe color="#38bdf8" size={20} /> {selectedRegion.name}
+                </h3>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Active Triage Alerts:</span>
-                <strong style={{ color: '#f87171' }}>{selectedZone.reportsCount} Anonymous Cases</strong>
+              {/* Risk Level Badge & Score Meter */}
+              <div style={{ background: selectedRegion.riskDetails.bg, border: `1px solid ${selectedRegion.riskDetails.border}`, padding: '12px 16px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: selectedRegion.riskDetails.color, fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase' }}>
+                    {selectedRegion.riskDetails.label}
+                  </span>
+                  <span style={{ color: selectedRegion.riskDetails.color, fontWeight: 900, fontSize: '1.2rem' }}>
+                    {selectedRegion.avgRisk}%
+                  </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: `${selectedRegion.avgRisk}%`, height: '100%', background: selectedRegion.riskDetails.color, transition: 'width 0.4s ease' }} />
+                </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Primary Risk Factor:</span>
-                <strong style={{ color: '#fbbf24' }}>{selectedZone.dominantThreat}</strong>
+              {/* Key Aggregated Stats */}
+              <div style={{ background: '#090e1a', padding: '14px', borderRadius: '10px', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.82rem' }}>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Total Case Count:</span>
+                  <strong style={{ color: '#38bdf8', fontSize: '0.95rem' }}>{selectedRegion.caseCount} Incident(s)</strong>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Dominant Cluster:</span>
+                  <strong style={{ color: '#f43f5e' }}>{selectedRegion.dominantCluster}</strong>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Common Platform:</span>
+                  <strong style={{ color: '#a855f7' }}>{selectedRegion.commonPlatform}</strong>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Highest Single Case Risk:</span>
+                  <strong style={{ color: '#ef4444' }}>{selectedRegion.maxRisk}%</strong>
+                </div>
+
               </div>
+
+              {/* Affiliated Schools List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <School size={16} color="#ec4899" /> Affiliated Schools in Region ({selectedRegion.schools.length}):
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '140px', overflowY: 'auto' }}>
+                  {selectedRegion.schools.length > 0 ? (
+                    selectedRegion.schools.map((sch, idx) => (
+                      <div key={idx} style={{ background: 'rgba(236, 72, 153, 0.1)', border: '1px solid rgba(236, 72, 153, 0.25)', padding: '7px 10px', borderRadius: '6px', fontSize: '0.78rem', color: '#fbcfe8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>🏫</span> {sch}
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '6px' }}>
+                      General / Unspecified School
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actionable Preventive Advisory */}
+              <div className="glass-panel" style={{ padding: '14px', borderLeft: '3px solid #38bdf8', marginTop: 'auto' }}>
+                <h4 style={{ fontSize: '0.82rem', color: '#38bdf8', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <BookOpen size={14} /> Preventive Action Plan
+                </h4>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                  Recommend conducting mandatory <em>"{selectedRegion.dominantCluster}"</em> awareness workshops for student welfare counsellors across schools in {selectedRegion.name}.
+                </p>
+              </div>
+
+            </>
+          ) : (
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', marginTop: '40px' }}>
+              Select a region marker on the map to inspect details.
             </div>
-          </div>
-
-          {/* Categorical Distribution Pie Chart */}
-          <div className="glass-panel" style={{ padding: '18px' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '10px' }}>
-              Threat Breakdown by Category
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '120px', height: '120px' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={CATEGORY_DATA} dataKey="count" innerRadius={28} outerRadius={50} paddingAngle={4}>
-                      {CATEGORY_DATA.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.72rem' }}>
-                {CATEGORY_DATA.map((cat, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color }} />
-                    <span style={{ color: 'var(--text-secondary)' }}>{cat.name}:</span>
-                    <strong style={{ color: 'var(--text-primary)' }}>{cat.count}%</strong>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Actionable Toolkit for Principals */}
-          <div className="glass-panel" style={{ padding: '18px' }}>
-            <h4 style={{ fontSize: '0.88rem', color: '#38bdf8', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <BookOpen size={16} /> Preventive Action for Schools
-            </h4>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-              Conduct dedicated <em>"Grooming & Secrecy Awareness"</em> student sessions and train homeroom teachers to recognize emotional withdrawal signs.
-            </p>
-          </div>
+          )}
 
         </div>
 
       </div>
+
     </div>
   );
 }

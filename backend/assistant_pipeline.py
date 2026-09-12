@@ -78,7 +78,7 @@ class SarvamClient:
         }
 
     def text_to_speech(self, text: str, language_code: str = "hi-IN", speaker: str = "priya") -> Dict[str, Any]:
-        """Converts localized text response into natural spoken Indic voice audio using Sarvam Bulbul model, handling long texts seamlessly"""
+        """Converts localized text response into natural spoken Indic voice audio using Sarvam Bulbul model"""
         if not self.is_configured():
             return {
                 "audio_base64": None,
@@ -87,125 +87,43 @@ class SarvamClient:
                 "is_fallback": True
             }
 
-        # 1. Clean markdown, emojis, asterisks, hashtags, URLs for smooth spoken synthesis
-        clean_text = re.sub(r'[*_#`~>\[\]]', ' ', text)
-        clean_text = re.sub(r'https?://\S+', '', clean_text)
-        clean_text = re.sub(r'[❤️👋🛑🔒🛡️💬⚠️🔍👀✅🚨🎙️📞]', '', clean_text)
-        clean_text = re.sub(r'\s+', ' ', clean_text).strip()
-
-        if not clean_text:
-            return {"audio_base64": None, "speaker": speaker, "language_code": language_code, "is_fallback": True}
-
-        # 2. Split into chunks <= 450 chars at sentence boundaries (।, ., ?, !, \n)
-        chunks = []
-        sentences = re.split(r'([।.?!;\n]+)', clean_text)
-        current_chunk = ""
-        for i in range(0, len(sentences), 2):
-            sentence = sentences[i]
-            punct = sentences[i+1] if i+1 < len(sentences) else ""
-            full_sentence = (sentence + punct).strip()
-            if not full_sentence:
-                continue
-            if len(current_chunk) + len(full_sentence) + 1 <= 450:
-                current_chunk = (current_chunk + " " + full_sentence).strip()
-            else:
-                if current_chunk:
-                    chunks.append(current_chunk)
-                if len(full_sentence) > 450:
-                    for sub in [full_sentence[j:j+450] for j in range(0, len(full_sentence), 450)]:
-                        chunks.append(sub)
-                    current_chunk = ""
-                else:
-                    current_chunk = full_sentence
-        if current_chunk:
-            chunks.append(current_chunk)
-
-        if not chunks:
-            chunks = [clean_text[:450]]
-
-        # Limit to first 4 chunks
-        chunks = chunks[:4]
-
         headers = {
             "api-subscription-key": self.api_key,
             "Content-Type": "application/json"
         }
+        payload = {
+            "inputs": [text[:450]],
+            "target_language_code": language_code,
+            "speaker": speaker,
+            "pitch": 0,
+            "pace": 0.95,
+            "loudness": 1.0,
+            "speech_sample_rate": 22050,
+            "enable_preprocessing": True,
+            "model": "bulbul:v3"
+        }
 
-        # Request TTS for chunks
-        collected_audios = []
-        for ch in chunks:
-            payload = {
-                "inputs": [ch],
-                "target_language_code": language_code,
-                "speaker": speaker,
-                "pitch": 0,
-                "pace": 0.95,
-                "loudness": 1.0,
-                "speech_sample_rate": 22050,
-                "enable_preprocessing": True,
-                "model": "bulbul:v3"
-            }
-            try:
-                resp = requests.post(f"{self.base_url}/text-to-speech", headers=headers, json=payload, timeout=15)
-                if resp.status_code == 200:
-                    result = resp.json()
-                    audios = result.get("audios", [])
-                    if audios:
-                        collected_audios.extend(audios)
-            except Exception as e:
-                print(f"[Sarvam TTS Chunk Error] {e}")
-
-        if not collected_audios:
-            return {
-                "audio_base64": None,
-                "speaker": speaker,
-                "language_code": language_code,
-                "is_fallback": True
-            }
-
-        # If single audio chunk, return directly
-        if len(collected_audios) == 1:
-            return {
-                "audio_base64": collected_audios[0],
-                "speaker": speaker,
-                "language_code": language_code,
-                "is_fallback": False
-            }
-
-        # Merge multiple WAV base64 audios into one continuous audio file
         try:
-            import io
-            import wave
-            params = None
-            data_frames = []
-            for b64_str in collected_audios:
-                raw_bytes = base64.b64decode(b64_str)
-                with wave.open(io.BytesIO(raw_bytes), 'rb') as w:
-                    if params is None:
-                        params = w.getparams()
-                    data_frames.append(w.readframes(w.getnframes()))
-
-            out_io = io.BytesIO()
-            with wave.open(out_io, 'wb') as out_w:
-                out_w.setparams(params)
-                for frames in data_frames:
-                    out_w.writeframes(frames)
-
-            combined_b64 = base64.b64encode(out_io.getvalue()).decode('utf-8')
-            return {
-                "audio_base64": combined_b64,
-                "speaker": speaker,
-                "language_code": language_code,
-                "is_fallback": False
-            }
+            resp = requests.post(f"{self.base_url}/text-to-speech", headers=headers, json=payload, timeout=15)
+            if resp.status_code == 200:
+                result = resp.json()
+                audios = result.get("audios", [])
+                if audios:
+                    return {
+                        "audio_base64": audios[0],
+                        "speaker": speaker,
+                        "language_code": language_code,
+                        "is_fallback": False
+                    }
         except Exception as e:
-            print(f"[Sarvam Audio Merge Error] {e}")
-            return {
-                "audio_base64": collected_audios[0],
-                "speaker": speaker,
-                "language_code": language_code,
-                "is_fallback": False
-            }
+            print(f"[Sarvam TTS Error] {e}")
+
+        return {
+            "audio_base64": None,
+            "speaker": speaker,
+            "language_code": language_code,
+            "is_fallback": True
+        }
 
 
 class GeminiContextEngine:
@@ -356,24 +274,24 @@ class SafetyEngineBridge:
     @staticmethod
     def evaluate(message: str) -> Dict[str, Any]:
         lower = message.lower()
-        score = 20
+        score = 15
         indicators = []
         
-        if re.search(r"photo|pic|selfie|tasveer|camera|video|nude|private|share", lower):
-            score += 45
-            indicators.append("Private Media Solicitation")
-        if re.search(r"secret|don'?t tell|kisi ko mat|ghar walo|chupao|raaz|mat batana|akela|alone", lower):
+        if re.search(r"photo|pic|selfie|tasveer|camera|video", lower):
             score += 40
+            indicators.append("Private Media Solicitation")
+        if re.search(r"secret|don'?t tell|kisi ko mat|ghar walo|chupao", lower):
+            score += 35
             indicators.append("Secrecy / Isolation Demand")
-        if re.search(r"leak|post|ruin|hate|blackmail|threat|dhamki|bully|pareshan|dar|scared|kill|force|bad touch", lower):
-            score += 50
+        if re.search(r"leak|post|ruin|hate|blackmail|threat|dhamki", lower):
+            score += 45
             indicators.append("Harassment / Extortion Threat")
-        if re.search(r"mature|sweet|trust me|bharosa|dost|gift|paisa|money|special", lower):
-            score += 25
-            indicators.append("Flattery / Grooming Pattern")
+        if re.search(r"mature|sweet|trust me|bharosa", lower):
+            score += 20
+            indicators.append("Flattery Grooming Pattern")
 
         score = min(98, score)
-        level = "HIGH" if score >= 60 else ("MEDIUM" if score >= 40 else "LOW")
+        level = "HIGH" if score >= 75 else ("MEDIUM" if score >= 40 else "LOW")
 
         return {
             "score": score,

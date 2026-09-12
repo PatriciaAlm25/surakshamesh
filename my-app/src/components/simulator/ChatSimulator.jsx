@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Shield, 
+  ShieldCheck,
   Sparkles, 
   AlertTriangle, 
   Send, 
