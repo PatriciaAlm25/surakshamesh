@@ -19,10 +19,12 @@ import {
   Calendar,
   Share2,
   Paperclip,
-  Network
+  Network,
+  Scale
 } from 'lucide-react';
 import { StorageService } from '../../services/storageService';
 import { NgoRecommendationService } from '../../services/ngoRecommendationService';
+import { LegalMatchingService } from '../../services/legalMatchingService';
 import confetti from 'canvas-confetti';
 
 const ONLINE_CATEGORIES = [
@@ -251,10 +253,21 @@ export default function AnonymousReportWizard({ setActiveTab }) {
           limit: 4
         });
 
+    const applicableLaws = (triageResult?.applicable_laws && triageResult.applicable_laws.length > 0)
+      ? triageResult.applicable_laws
+      : LegalMatchingService.getApplicableLaws({
+          category,
+          tactics: selectedTactics,
+          age: ageBracket,
+          environment,
+          limit: 3
+        });
+
     setGeneratedCase({
       ...saved,
       triageData: triageResult,
-      recommendedNgos
+      recommendedNgos,
+      applicableLaws
     });
     
     setIsSubmitting(false);
@@ -1250,6 +1263,95 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                           Visit Website ↗
                         </a>
                       )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Applicable Legal Protections, Laws & Penalties Card */}
+          {generatedCase.applicableLaws && generatedCase.applicableLaws.length > 0 && (
+            <div 
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(20, 16, 42, 0.95) 0%, rgba(30, 20, 60, 0.95) 100%)',
+                border: '1.5px solid rgba(168, 85, 247, 0.45)',
+                borderRadius: '16px',
+                padding: '22px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                boxShadow: '0 8px 30px rgba(168, 85, 247, 0.15)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', color: '#f3e8ff', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
+                    <Scale size={18} color="#c084fc" /> Applicable Legal Sections & Statutory Protections
+                  </h4>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: '#d8b4fe' }}>
+                    Identified automatically under Indian Law (POCSO Act, IT Act, BNS / IPC, Constitution) based on your report
+                  </p>
+                </div>
+                <span style={{ fontSize: '0.7rem', padding: '3px 10px', borderRadius: '999px', background: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.4)', fontWeight: 700 }}>
+                  ⚖️ Indian Penal & Cyber Law
+                </span>
+              </div>
+
+              {/* Reassurance Banner */}
+              <div style={{ background: 'rgba(168, 85, 247, 0.12)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '10px', padding: '10px 14px', fontSize: '0.8rem', color: '#f3e8ff', lineHeight: 1.45 }}>
+                🛡️ <strong>Statutory Victim Guarantee:</strong> You are the victim protected under these laws. The perpetrator is criminally liable. You cannot be penalized for reporting or preserving evidence.
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {generatedCase.applicableLaws.map((law, idx) => (
+                  <div 
+                    key={idx}
+                    style={{
+                      background: 'rgba(10, 8, 26, 0.9)',
+                      border: '1px solid rgba(168, 85, 247, 0.3)',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', flexWrap: 'wrap' }}>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>
+                          {law.act}
+                        </span>
+                        <h5 style={{ margin: '2px 0 0 0', fontSize: '0.98rem', color: '#f8fafc', fontWeight: 800 }}>
+                          {law.section}: {law.title}
+                        </h5>
+                      </div>
+                      <span 
+                        style={{ 
+                          fontSize: '0.68rem', 
+                          padding: '3px 8px', 
+                          borderRadius: '6px', 
+                          background: law.nature_of_offence?.includes('Non-Bailable') ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.15)',
+                          color: law.nature_of_offence?.includes('Non-Bailable') ? '#f87171' : '#38bdf8',
+                          border: law.nature_of_offence?.includes('Non-Bailable') ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(56, 189, 248, 0.3)',
+                          fontWeight: 700
+                        }}
+                      >
+                        {law.nature_of_offence}
+                      </span>
+                    </div>
+
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                      {law.description}
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', fontSize: '0.75rem' }}>
+                      <div style={{ color: '#fca5a5' }}>
+                        <strong>Statutory Penalty: </strong>{law.penalty}
+                      </div>
+                      <div style={{ color: '#a7f3d0' }}>
+                        <strong>Your Protection: </strong>{law.child_rights_protection}
+                      </div>
                     </div>
                   </div>
                 ))}

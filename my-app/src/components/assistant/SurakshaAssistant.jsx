@@ -313,9 +313,9 @@ export default function SurakshaAssistant({ setActiveTab }) {
           justifyContent: 'space-between', 
           alignItems: 'center', 
           gap: '16px',
-          background: 'linear-gradient(135deg, rgba(8, 24, 48, 0.85) 0%, rgba(14, 38, 72, 0.75) 100%)',
-          border: '1px solid rgba(56, 189, 248, 0.4)',
-          boxShadow: '0 8px 32px rgba(56, 189, 248, 0.12)'
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(224,242,254,0.9) 100%)',
+          border: '1.5px solid rgba(14, 165, 233, 0.3)',
+          boxShadow: '0 4px 24px rgba(14, 116, 189, 0.1)'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -324,18 +324,18 @@ export default function SurakshaAssistant({ setActiveTab }) {
               width: '48px', 
               height: '48px', 
               borderRadius: '14px', 
-              background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)', 
+              background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              boxShadow: '0 0 24px rgba(56, 189, 248, 0.45)'
+              boxShadow: '0 4px 16px rgba(14, 165, 233, 0.4)'
             }}
           >
-            <Sparkles size={24} color="#041122" />
+            <Sparkles size={24} color="#ffffff" />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #e0f2fe 0%, #38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #0ea5e9 0%, #2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 Suraksha Voice Assistant
               </h2>
               <span 
@@ -343,16 +343,16 @@ export default function SurakshaAssistant({ setActiveTab }) {
                   fontSize: '0.7rem', 
                   padding: '3px 10px', 
                   borderRadius: '999px', 
-                  background: 'rgba(56, 189, 248, 0.18)', 
-                  border: '1px solid #38bdf8', 
-                  color: '#38bdf8',
-                  fontWeight: 600
+                  background: 'rgba(14, 165, 233, 0.12)', 
+                  border: '1px solid rgba(14, 165, 233, 0.4)', 
+                  color: '#0284c7',
+                  fontWeight: 700
                 }}
               >
                 Sarvam AI + Gemini AI
               </span>
             </div>
-            <p style={{ fontSize: '0.82rem', color: '#93c5fd', margin: 0, marginTop: '2px' }}>
+            <p style={{ fontSize: '0.82rem', color: '#334155', margin: 0, marginTop: '2px' }}>
               Speak or type in any Indian language. Empathetic situation triage & audio safety guidance.
             </p>
           </div>
@@ -365,21 +365,21 @@ export default function SurakshaAssistant({ setActiveTab }) {
               display: 'flex', 
               alignItems: 'center', 
               gap: '8px', 
-              background: 'rgba(8, 24, 48, 0.9)', 
+              background: 'rgba(241, 245, 249, 0.95)', 
               padding: '6px 12px', 
               borderRadius: '10px', 
-              border: '1px solid rgba(56, 189, 248, 0.4)',
-              boxShadow: '0 0 15px rgba(56, 189, 248, 0.1)'
+              border: '1.5px solid rgba(14, 165, 233, 0.3)',
+              boxShadow: '0 2px 8px rgba(14, 116, 189, 0.08)'
             }}
           >
-            <Globe size={16} color="#38bdf8" />
+            <Globe size={16} color="#0ea5e9" />
             <select
               value={selectedLanguage}
               onChange={e => handleLanguageChange(e.target.value)}
-              style={{ background: 'transparent', border: 'none', color: '#e0f2fe', fontSize: '0.84rem', padding: '2px', cursor: 'pointer', outline: 'none' }}
+              style={{ background: 'transparent', border: 'none', color: '#0f172a', fontSize: '0.84rem', padding: '2px', cursor: 'pointer', outline: 'none' }}
             >
               {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code} style={{ background: '#071529', color: '#e0f2fe' }}>
+                <option key={lang.code} value={lang.code} style={{ background: '#ffffff', color: '#0f172a' }}>
                   {lang.flag} {lang.native} ({lang.name})
                 </option>
               ))}
@@ -392,18 +392,18 @@ export default function SurakshaAssistant({ setActiveTab }) {
               padding: '8px 14px', 
               fontSize: '0.8rem',
               borderRadius: '10px',
-              background: autoPlayAudio ? 'rgba(56, 189, 248, 0.22)' : 'rgba(15, 23, 42, 0.7)',
-              border: '1px solid rgba(56, 189, 248, 0.4)',
-              color: autoPlayAudio ? '#38bdf8' : '#94a3b8',
+              background: autoPlayAudio ? 'rgba(14, 165, 233, 0.12)' : 'rgba(241, 245, 249, 0.9)',
+              border: '1.5px solid rgba(14, 165, 233, 0.35)',
+              color: autoPlayAudio ? '#0284c7' : '#64748b',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: 'pointer'
             }}
             title="Toggle automatic audio read-aloud"
           >
-            {autoPlayAudio ? <Volume2 size={16} color="#38bdf8" /> : <VolumeX size={16} color="#64748b" />}
+            {autoPlayAudio ? <Volume2 size={16} color="#0ea5e9" /> : <VolumeX size={16} color="#64748b" />}
             {autoPlayAudio ? 'Voice: ON' : 'Voice: OFF'}
           </button>
         </div>
@@ -412,8 +412,8 @@ export default function SurakshaAssistant({ setActiveTab }) {
       {/* 4-Layer Architecture Pipeline Bar - Light Blue Styling */}
       <div 
         style={{ 
-          background: 'linear-gradient(90deg, rgba(8, 24, 48, 0.9) 0%, rgba(12, 34, 64, 0.85) 100%)', 
-          border: '1px solid rgba(56, 189, 248, 0.35)', 
+          background: 'linear-gradient(90deg, rgba(224,242,254,0.9) 0%, rgba(219,234,254,0.85) 100%)', 
+          border: '1.5px solid rgba(14, 165, 233, 0.25)', 
           borderRadius: '14px', 
           padding: '12px 18px', 
           display: 'flex', 
@@ -422,24 +422,24 @@ export default function SurakshaAssistant({ setActiveTab }) {
           justifyContent: 'space-between', 
           gap: '8px', 
           fontSize: '0.78rem',
-          boxShadow: '0 4px 20px rgba(56, 189, 248, 0.08)'
+          boxShadow: '0 2px 12px rgba(14, 116, 189, 0.08)'
         }}
       >
-        <span style={{ color: '#93c5fd', fontWeight: 600 }}>AI Safety Pipeline:</span>
-        <span style={{ color: '#38bdf8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8' }} /> 1. Sarvam AI (Speech)
+        <span style={{ color: '#334155', fontWeight: 700 }}>AI Safety Pipeline:</span>
+        <span style={{ color: '#0284c7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#0ea5e9' }} /> 1. Sarvam AI (Speech)
         </span>
-        <span style={{ color: 'rgba(56, 189, 248, 0.4)' }}>➔</span>
-        <span style={{ color: '#7dd3fc', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#7dd3fc' }} /> 2. Gemini AI (Situation)
+        <span style={{ color: '#94a3b8' }}>➔</span>
+        <span style={{ color: '#2563eb', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#2563eb' }} /> 2. Gemini AI (Situation)
         </span>
-        <span style={{ color: 'rgba(56, 189, 248, 0.4)' }}>➔</span>
-        <span style={{ color: '#bae6fd', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#bae6fd' }} /> 3. Python Safety (Risk)
+        <span style={{ color: '#94a3b8' }}>➔</span>
+        <span style={{ color: '#7c3aed', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#8b5cf6' }} /> 3. Python Safety (Risk)
         </span>
-        <span style={{ color: 'rgba(56, 189, 248, 0.4)' }}>➔</span>
-        <span style={{ color: '#38bdf8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8' }} /> 4. Bulbul Audio Voice
+        <span style={{ color: '#94a3b8' }}>➔</span>
+        <span style={{ color: '#0284c7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#0ea5e9' }} /> 4. Bulbul Audio Voice
         </span>
       </div>
 
@@ -450,10 +450,10 @@ export default function SurakshaAssistant({ setActiveTab }) {
           display: 'flex', 
           flexDirection: 'column', 
           overflow: 'hidden',
-          background: 'radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.12), transparent 75%), rgba(6, 16, 33, 0.92)',
-          border: '2px solid rgba(56, 189, 248, 0.35)',
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(14, 165, 233, 0.08), transparent 70%), #f8fafc',
+          border: '1.5px solid rgba(14, 165, 233, 0.25)',
           borderRadius: '20px',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 35px rgba(56, 189, 248, 0.15)'
+          boxShadow: '0 8px 40px rgba(14, 116, 189, 0.12)'
         }}
       >
         
@@ -479,15 +479,15 @@ export default function SurakshaAssistant({ setActiveTab }) {
                       width: '38px', 
                       height: '38px', 
                       borderRadius: '50%', 
-                      background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)', 
+                      background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', 
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center', 
                       flexShrink: 0,
-                      boxShadow: '0 0 16px rgba(56, 189, 248, 0.4)'
+                      boxShadow: '0 4px 14px rgba(14, 165, 233, 0.35)'
                     }}
                   >
-                    <Shield size={20} color="#041122" />
+                    <Shield size={20} color="#ffffff" />
                   </div>
                 )}
 
@@ -519,19 +519,19 @@ export default function SurakshaAssistant({ setActiveTab }) {
                   <div 
                     style={{ 
                       background: isBot 
-                        ? 'rgba(10, 25, 48, 0.88)' 
-                        : 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)',
-                      color: isBot ? '#f0f9ff' : '#041122',
+                        ? '#ffffff' 
+                        : 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
+                      color: isBot ? '#0f172a' : '#ffffff',
                       padding: '14px 18px',
                       borderRadius: '18px',
                       borderBottomLeftRadius: isBot ? '4px' : '18px',
                       borderBottomRightRadius: isBot ? '18px' : '4px',
                       fontSize: '0.9rem',
                       lineHeight: 1.55,
-                      border: isBot ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid #7dd3fc',
+                      border: isBot ? '1px solid rgba(14, 116, 189, 0.15)' : 'none',
                       boxShadow: isBot 
-                        ? '0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(56, 189, 248, 0.08)' 
-                        : '0 4px 20px rgba(56, 189, 248, 0.3)'
+                        ? '0 2px 12px rgba(14, 116, 189, 0.08)' 
+                        : '0 4px 16px rgba(14, 165, 233, 0.3)'
                     }}
                   >
                     <div style={{ whiteSpace: 'pre-line', fontWeight: isBot ? 400 : 600 }}>
@@ -539,8 +539,8 @@ export default function SurakshaAssistant({ setActiveTab }) {
                     </div>
 
                     {/* Bottom Metadata & Voice Playback Button */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '8px', borderTop: isBot ? '1px solid rgba(56, 189, 248, 0.15)' : '1px solid rgba(4, 17, 34, 0.15)' }}>
-                      <span style={{ fontSize: '0.7rem', opacity: 0.75, color: isBot ? '#93c5fd' : '#041122' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '8px', borderTop: isBot ? '1px solid rgba(14, 116, 189, 0.1)' : '1px solid rgba(255,255,255,0.25)' }}>
+                      <span style={{ fontSize: '0.7rem', opacity: 0.7, color: isBot ? '#64748b' : 'rgba(255,255,255,0.8)' }}>
                         {msg.timestamp}
                       </span>
 
@@ -549,9 +549,9 @@ export default function SurakshaAssistant({ setActiveTab }) {
                         <button
                           onClick={() => handlePlayAudio(msg)}
                           style={{
-                            background: isPlaying ? 'rgba(56, 189, 248, 0.35)' : 'rgba(56, 189, 248, 0.15)',
-                            color: '#38bdf8',
-                            border: '1px solid rgba(56, 189, 248, 0.45)',
+                            background: isPlaying ? 'rgba(14, 165, 233, 0.2)' : 'rgba(14, 165, 233, 0.08)',
+                            color: '#0284c7',
+                            border: '1px solid rgba(14, 165, 233, 0.35)',
                             padding: '4px 10px',
                             borderRadius: '8px',
                             fontSize: '0.74rem',
@@ -559,12 +559,12 @@ export default function SurakshaAssistant({ setActiveTab }) {
                             alignItems: 'center',
                             gap: '5px',
                             cursor: 'pointer',
-                            fontWeight: 600,
-                            boxShadow: isPlaying ? '0 0 12px rgba(56, 189, 248, 0.4)' : 'none'
+                            fontWeight: 700,
+                            boxShadow: isPlaying ? '0 0 10px rgba(14, 165, 233, 0.25)' : 'none'
                           }}
                         >
                           {isPlaying ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                          <span>{isPlaying ? 'Stop Spoken Audio' : 'Play Voice Audio'}</span>
+                          <span>{isPlaying ? 'Stop Audio' : 'Play Audio'}</span>
                         </button>
                       )}
                     </div>
@@ -667,11 +667,11 @@ export default function SurakshaAssistant({ setActiveTab }) {
           {/* Typing State */}
           {isTyping && (
             <div style={{ display: 'flex', gap: '12px', alignSelf: 'flex-start' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #38bdf8, #0284c7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Shield size={20} color="#041122" />
+              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #0ea5e9, #2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(14,165,233,0.3)' }}>
+                <Shield size={20} color="#ffffff" />
               </div>
-              <div style={{ background: 'rgba(10, 25, 48, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '12px 16px', borderRadius: '18px', fontSize: '0.84rem', color: '#93c5fd', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <RefreshCw className="animate-spin" size={15} color="#38bdf8" />
+              <div style={{ background: '#ffffff', border: '1px solid rgba(14, 165, 233, 0.2)', padding: '12px 16px', borderRadius: '18px', fontSize: '0.84rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 2px 8px rgba(14,116,189,0.08)' }}>
+                <RefreshCw className="animate-spin" size={15} color="#0ea5e9" />
                 <span>Sarvam & Gemini are analyzing in {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name}...</span>
               </div>
             </div>
@@ -684,21 +684,21 @@ export default function SurakshaAssistant({ setActiveTab }) {
         {isRecording && (
           <div 
             style={{ 
-              background: 'linear-gradient(90deg, rgba(8, 28, 56, 0.95) 0%, rgba(14, 46, 88, 0.95) 100%)', 
-              borderTop: '2px solid #38bdf8', 
+              background: 'linear-gradient(90deg, rgba(224,242,254,0.98) 0%, rgba(219,234,254,0.98) 100%)', 
+              borderTop: '2px solid #0ea5e9', 
               padding: '14px 22px', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'space-between',
-              boxShadow: '0 -4px 25px rgba(56, 189, 248, 0.25)'
+              boxShadow: '0 -4px 20px rgba(14, 165, 233, 0.15)'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 14px #38bdf8', animation: 'pulseGlow 1s infinite' }} />
-              <strong style={{ fontSize: '0.9rem', color: '#e0f2fe' }}>
+              <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#0ea5e9', boxShadow: '0 0 14px #0ea5e9', animation: 'pulseGlow 1s infinite' }} />
+              <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>
                 Listening in {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name}... (00:{recordingSeconds < 10 ? `0${recordingSeconds}` : recordingSeconds})
               </strong>
-              <span style={{ fontSize: '0.78rem', color: '#93c5fd' }}>Speak your question or concern now</span>
+              <span style={{ fontSize: '0.78rem', color: '#334155' }}>Speak your question or concern now</span>
             </div>
 
             <button
@@ -715,8 +715,8 @@ export default function SurakshaAssistant({ setActiveTab }) {
         <div 
           style={{ 
             padding: '10px 18px', 
-            background: 'rgba(6, 16, 33, 0.95)', 
-            borderTop: '1px solid rgba(56, 189, 248, 0.2)', 
+            background: '#f0f9ff', 
+            borderTop: '1px solid rgba(14, 165, 233, 0.15)', 
             display: 'flex', 
             gap: '8px', 
             overflowX: 'auto', 
@@ -733,23 +733,24 @@ export default function SurakshaAssistant({ setActiveTab }) {
               key={idx}
               onClick={() => setInputText(prompt)}
               style={{
-                background: 'rgba(56, 189, 248, 0.12)',
-                color: '#bae6fd',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
+                background: 'rgba(14, 165, 233, 0.1)',
+                color: '#0284c7',
+                border: '1px solid rgba(14, 165, 233, 0.3)',
                 borderRadius: '999px',
                 padding: '6px 14px',
                 fontSize: '0.76rem',
                 flexShrink: 0,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                fontWeight: 500
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(56, 189, 248, 0.25)';
-                e.currentTarget.style.color = '#38bdf8';
+                e.currentTarget.style.background = 'rgba(14, 165, 233, 0.2)';
+                e.currentTarget.style.color = '#0369a1';
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.background = 'rgba(56, 189, 248, 0.12)';
-                e.currentTarget.style.color = '#bae6fd';
+                e.currentTarget.style.background = 'rgba(14, 165, 233, 0.1)';
+                e.currentTarget.style.color = '#0284c7';
               }}
             >
               {prompt}
@@ -762,14 +763,14 @@ export default function SurakshaAssistant({ setActiveTab }) {
           onSubmit={handleSendText} 
           style={{ 
             padding: '14px 18px', 
-            background: 'rgba(5, 14, 30, 0.98)', 
-            borderTop: '1px solid rgba(56, 189, 248, 0.25)', 
+            background: '#ffffff', 
+            borderTop: '1px solid rgba(14, 165, 233, 0.15)', 
             display: 'flex', 
             alignItems: 'center', 
             gap: '12px' 
           }}
         >
-          {/* Audio Mic Button - Glowing Light Blue */}
+          {/* Audio Mic Button */}
           <button
             type="button"
             onClick={isRecording ? handleStopRecord : handleStartRecord}
@@ -779,15 +780,15 @@ export default function SurakshaAssistant({ setActiveTab }) {
               borderRadius: '50%',
               background: isRecording 
                 ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' 
-                : 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(2, 132, 199, 0.3) 100%)',
-              border: isRecording ? '2px solid #fff' : '1.5px solid #38bdf8',
-              color: isRecording ? '#fff' : '#38bdf8',
+                : 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
+              border: 'none',
+              color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               flexShrink: 0,
-              boxShadow: '0 0 16px rgba(56, 189, 248, 0.35)',
+              boxShadow: isRecording ? '0 0 16px rgba(239,68,68,0.4)' : '0 4px 14px rgba(14,165,233,0.35)',
               transition: 'all 0.2s ease'
             }}
             title={isRecording ? "Stop recording" : "Record voice query"}
@@ -805,10 +806,10 @@ export default function SurakshaAssistant({ setActiveTab }) {
               flex: 1, 
               padding: '12px 16px', 
               fontSize: '0.9rem',
-              background: 'rgba(8, 22, 44, 0.9)',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
+              background: '#f8fafc',
+              border: '1.5px solid rgba(14, 165, 233, 0.3)',
               borderRadius: '12px',
-              color: '#f0f9ff'
+              color: '#0f172a'
             }}
           />
 
@@ -817,11 +818,7 @@ export default function SurakshaAssistant({ setActiveTab }) {
             className="btn-primary" 
             style={{ 
               padding: '12px 18px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)',
-              color: '#041122',
-              fontWeight: 700,
-              boxShadow: '0 0 18px rgba(56, 189, 248, 0.35)'
+              borderRadius: '12px'
             }} 
             disabled={!inputText.trim() || isRecording}
           >
@@ -833,7 +830,6 @@ export default function SurakshaAssistant({ setActiveTab }) {
 
       {/* Helpline Info Bar - Light Blue Accent */}
       <div 
-        className="glass-panel" 
         style={{ 
           padding: '16px 22px', 
           display: 'flex', 
@@ -841,14 +837,16 @@ export default function SurakshaAssistant({ setActiveTab }) {
           justifyContent: 'space-between', 
           alignItems: 'center', 
           gap: '12px',
-          background: 'linear-gradient(135deg, rgba(8, 24, 48, 0.8) 0%, rgba(14, 38, 72, 0.7) 100%)',
-          border: '1px solid rgba(56, 189, 248, 0.3)'
+          background: 'linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%)',
+          border: '1.5px solid rgba(14, 165, 233, 0.25)',
+          borderRadius: '14px',
+          boxShadow: '0 2px 12px rgba(14, 116, 189, 0.08)'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <PhoneCall size={20} color="#38bdf8" />
-          <span style={{ fontSize: '0.85rem', color: '#bae6fd' }}>
-            Need to speak to a real verified counsellor right now? Call <strong style={{ color: '#38bdf8' }}>Childline 1098</strong> (Toll-Free, 24/7).
+          <PhoneCall size={20} color="#0284c7" />
+          <span style={{ fontSize: '0.85rem', color: '#334155' }}>
+            Need to speak to a verified counsellor right now? Call <strong style={{ color: '#0284c7' }}>Childline 1098</strong> (Toll-Free, 24/7).
           </span>
         </div>
         <button className="btn-danger" style={{ fontSize: '0.78rem', padding: '8px 16px', borderRadius: '8px' }} onClick={() => setActiveTab('report')}>

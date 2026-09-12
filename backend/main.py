@@ -281,6 +281,7 @@ class InvisibleSOSRequest(BaseModel):
     immediate_danger: Optional[str] = "No"
 
 from ngo_service import match_ngos_by_location
+from legal_service import match_applicable_laws
 
 @app.post("/api/invisible-sos/triage")
 def triage_invisible_sos_endpoint(req: InvisibleSOSRequest):
@@ -295,6 +296,16 @@ def triage_invisible_sos_endpoint(req: InvisibleSOSRequest):
         limit=4
     )
     result["recommended_ngos"] = ngos
+
+    # Match statutory Indian laws, POCSO/IT Act sections & Constitutional articles
+    laws = match_applicable_laws(
+        category=req.primary_category or "",
+        tactics=req.tactics_observed or [],
+        age=req.age_bracket or "",
+        environment=req.environment or "Online",
+        limit=3
+    )
+    result["applicable_laws"] = laws
     return result
 
 @app.post("/api/translate-case")
