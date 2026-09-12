@@ -104,14 +104,53 @@ export const VoiceAssistantService = {
   fallbackSpeak(text, languageCode, onEnded) {
     if (!window.speechSynthesis) return;
 
-    // Clean markdown stars before speech
-    const cleanText = text.replace(/[*_#`]/g, '').slice(0, 300);
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = languageCode;
-    utterance.rate = 0.95;
+    // Clean markdown, symbols, emojis, and links
+    const cleanText = text
+      .replace(/[*_#`~>\[\]]/g, '')
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+      .trim();
 
-    if (onEnded) utterance.onend = onEnded;
-    window.speechSynthesis.speak(utterance);
+    if (!cleanText) {
+      if (onEnded) onEnded();
+      return;
+    }
+
+    // Split into sentences for smooth browser TTS without timeouts
+    const sentences = cleanText.match(/[^।.?!;\n]+[।.?!;\n]*/g) || [cleanText];
+    let currentIndex = 0;
+
+    const speakNextSentence = () => {
+      if (currentIndex >= sentences.length) {
+        if (onEnded) onEnded();
+        return;
+      }
+
+      const sentenceText = sentences[currentIndex].trim();
+      currentIndex++;
+
+      if (!sentenceText) {
+        speakNextSentence();
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(sentenceText);
+      utterance.lang = languageCode;
+      utterance.rate = 0.95;
+
+      utterance.onend = () => {
+        speakNextSentence();
+      };
+
+      utterance.onerror = (e) => {
+        console.warn('SpeechSynthesis error:', e);
+        speakNextSentence();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    };
+
+    speakNextSentence();
   },
 
   /**

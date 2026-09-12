@@ -1,5 +1,6 @@
 -- SURAKSHA MESH - Supabase PostgreSQL Schema
--- Database schema for anonymous child safety reporting, risk analysis, and case tracking.
+-- Database schema for anonymous child safety reporting, risk analysis, case tracking,
+-- and AI Assistant chat session history.
 
 -- 1. Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -76,10 +77,62 @@ CREATE TABLE IF NOT EXISTS school_safety_metrics (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 6. Row Level Security (RLS) Policies
+-- =========================================================================
+-- 6. AI Assistant Chat Sessions & Message Logging Table
+-- Storing all user interactions with Suraksha Assistant in Supabase
+-- =========================================================================
+
+-- Session container for child conversations
+CREATE TABLE IF NOT EXISTS assistant_chat_sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    session_code VARCHAR(32) UNIQUE NOT NULL, -- e.g. SESH-2026-92841
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    language_code VARCHAR(15) DEFAULT 'hi-IN', -- hi-IN, mr-IN, en-IN, etc.
+    highest_risk_score INTEGER DEFAULT 10,
+    highest_risk_level risk_level DEFAULT 'LOW',
+    detected_category incident_category DEFAULT 'OTHER_CONCERN',
+    is_reported BOOLEAN DEFAULT FALSE,
+    escalated_to_case_id UUID REFERENCES anonymous_cases(id) ON DELETE SET NULL
+);
+
+-- Individual messages inside each chat session
+CREATE TABLE IF NOT EXISTS assistant_chat_messages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    session_id UUID REFERENCES assistant_chat_sessions(id) ON DELETE CASCADE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    sender VARCHAR(20) NOT NULL CHECK (sender IN ('user', 'assistant')),
+    message_text TEXT NOT NULL,
+    language_code VARCHAR(15) DEFAULT 'hi-IN',
+    
+    -- Multimodal attributes
+    is_voice_input BOOLEAN DEFAULT FALSE,
+    audio_url TEXT, -- Link to Supabase Storage audio blob if applicable
+    
+    -- AI Triage Diagnostics
+    situation_assessment TEXT,
+    emotional_state VARCHAR(50),
+    risk_score INTEGER,
+    risk_level risk_level,
+    behavioral_indicators JSONB DEFAULT '[]'::jsonb,
+    prompted_for_report BOOLEAN DEFAULT FALSE, -- True if AI asked: "Should I register/report this?"
+    user_confirmed_report BOOLEAN DEFAULT FALSE -- True if child replied Yes to register
+);
+
+-- Indexes for lightning-fast queries
+CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON assistant_chat_messages(session_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON assistant_chat_messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_reported ON assistant_chat_sessions(is_reported);
+CREATE INDEX IF NOT EXISTS idx_cases_code ON anonymous_cases(case_code);
+
+-- =========================================================================
+-- 7. Row Level Security (RLS) Policies
+-- =========================================================================
 ALTER TABLE anonymous_cases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE case_timeline_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE school_safety_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE assistant_chat_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE assistant_chat_messages ENABLE ROW LEVEL SECURITY;
 
 -- Anonymous public can create reports and read their specific case by case_code
 CREATE POLICY "Allow public insert of anonymous reports" 
@@ -96,4 +149,25 @@ CREATE POLICY "Allow public read of timeline by case_id"
 
 CREATE POLICY "Allow public read of aggregated school metrics" 
     ON school_safety_metrics FOR SELECT 
+    USING (true);
+
+-- Allow public insertion and read of chat sessions & messages
+CREATE POLICY "Allow public insert of chat sessions" 
+    ON assistant_chat_sessions FOR INSERT 
+    WITH CHECK (true);
+
+CREATE POLICY "Allow public update of chat sessions" 
+    ON assistant_chat_sessions FOR UPDATE 
+    USING (true);
+
+CREATE POLICY "Allow public read of chat sessions" 
+    ON assistant_chat_sessions FOR SELECT 
+    USING (true);
+
+CREATE POLICY "Allow public insert of chat messages" 
+    ON assistant_chat_messages FOR INSERT 
+    WITH CHECK (true);
+
+CREATE POLICY "Allow public read of chat messages" 
+    ON assistant_chat_messages FOR SELECT 
     USING (true);
