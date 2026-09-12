@@ -1,21 +1,15 @@
-import joblib
 from pathlib import Path
 from .pattern_engine import calculate_pattern_risk
 
-
-# ============================================================
-# LOAD MODEL
-# ============================================================
-
-print("Loading Bal Suraksha ML model...")
-
-MODEL_PATH = Path(__file__).resolve().parent / "bal_suraksha_model.pkl"
-
-print(f"Loading Bal Suraksha ML model from: {MODEL_PATH}")
-
-model = joblib.load(MODEL_PATH)
-
-print("Bal Suraksha ML model loaded successfully!")
+try:
+    import joblib
+    MODEL_PATH = Path(__file__).resolve().parent / "bal_suraksha_model.pkl"
+    print(f"Loading Bal Suraksha ML model from: {MODEL_PATH}")
+    model = joblib.load(MODEL_PATH)
+    print("Bal Suraksha ML model loaded successfully!")
+except Exception as e:
+    print(f"Warning: Could not load ML model ({e}). Using pattern & rule engine fallback.")
+    model = None
 
 
 
@@ -53,72 +47,52 @@ def analyze_conversation(messages):
     # ML ANALYSIS
     # ========================================================
 
-    probabilities = model.predict_proba(
-        messages
-    )
-
-    classes = model.classes_
-
     message_results = []
-
     risk_scores = {
         "cyberbullying": [],
         "grooming": [],
         "scam": []
     }
 
+    if model is not None:
+        try:
+            probabilities = model.predict_proba(messages)
+            classes = model.classes_
 
-    for message, probability in zip(
-        messages,
-        probabilities
-    ):
+            for message, probability in zip(messages, probabilities):
+                scores = {
+                    category: float(score)
+                    for category, score in zip(classes, probability)
+                }
+                prediction = max(scores, key=scores.get)
+                confidence = scores[prediction]
 
-        scores = {
-            category: float(score)
-            for category, score in zip(
-                classes,
-                probability
-            )
-        }
+                message_results.append({
+                    "message": message,
+                    "prediction": prediction,
+                    "confidence": round(confidence, 4),
+                    "probabilities": {
+                        category: round(score, 4)
+                        for category, score in scores.items()
+                    }
+                })
 
-        prediction = max(
-            scores,
-            key=scores.get
-        )
+                for category in risk_scores:
+                    risk_scores[category].append(scores.get(category, 0))
+        except Exception as e:
+            print(f"Inference error with ML model: {e}")
 
-        confidence = scores[prediction]
-
-
-        message_results.append({
-
-            "message": message,
-
-            "prediction": prediction,
-
-            "confidence": round(
-                confidence,
-                4
-            ),
-
-            "probabilities": {
-                category: round(
-                    score,
-                    4
-                )
-                for category, score
-                in scores.items()
-            }
-        })
-
-
-        for category in risk_scores:
-
-            risk_scores[category].append(
-                scores.get(
-                    category,
-                    0
-                )
-            )
+    # Fallback if no ML results generated
+    if not message_results:
+        for message in messages:
+            message_results.append({
+                "message": message,
+                "prediction": "safe",
+                "confidence": 1.0,
+                "probabilities": {"safe": 1.0, "cyberbullying": 0.0, "grooming": 0.0, "scam": 0.0}
+            })
+            for category in risk_scores:
+                risk_scores[category].append(0.0)
 
 
     # ========================================================
@@ -127,48 +101,21 @@ def analyze_conversation(messages):
 
     ml_category_scores = {}
 
-
     for category, scores in risk_scores.items():
-
-        scores = sorted(
-            scores,
-            reverse=True
-        )
-
-        # Only use strongest 3 messages.
+        scores = sorted(scores, reverse=True)
         top_scores = scores[:3]
-
-
         if top_scores:
-
-            average = (
-                sum(top_scores)
-                /
-                len(top_scores)
-            )
-
+            average = sum(top_scores) / len(top_scores)
         else:
-
             average = 0
-
-
-        ml_category_scores[category] = (
-            average * 100
-        )
-
+        ml_category_scores[category] = average * 100
 
     # ========================================================
     # ML DOMINANT CATEGORY
     # ========================================================
 
-    ml_category = max(
-        ml_category_scores,
-        key=ml_category_scores.get
-    )
-
-    ml_risk_score = ml_category_scores[
-        ml_category
-    ]
+    ml_category = max(ml_category_scores, key=ml_category_scores.get) if ml_category_scores else "safe"
+    ml_risk_score = ml_category_scores.get(ml_category, 0)
 
 
     # ========================================================

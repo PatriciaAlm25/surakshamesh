@@ -129,10 +129,16 @@ class SarvamClient:
 class GeminiContextEngine:
     """Gemini AI Context & Situation Understanding Layer"""
     def __init__(self, api_key: Optional[str] = None):
+        load_dotenv(override=True)
         self.api_key = api_key or os.getenv("GEMINI_API_KEY", "")
 
+    def get_api_key(self) -> str:
+        load_dotenv(override=True)
+        return self.api_key or os.getenv("GEMINI_API_KEY", "")
+
     def is_configured(self) -> bool:
-        return bool(self.api_key and len(self.api_key) > 5)
+        key = self.get_api_key()
+        return bool(key and len(key) > 10 and not key.startswith("your_gemini_api_key"))
 
     def analyze_situation_and_generate_advice(
         self,
@@ -152,16 +158,16 @@ class GeminiContextEngine:
         if self.is_configured():
             try:
                 import google.generativeai as genai
-                genai.configure(api_key=self.api_key)
+                genai.configure(api_key=self.get_api_key())
 
                 # Resilient Multi-Model Failover List across active Google AI models
                 candidate_models = [
+                    "gemini-2.5-flash",
+                    "gemini-flash-latest",
+                    "gemini-1.5-flash",
+                    "gemini-2.0-flash",
                     "gemini-3.7-flash",
-                    "gemini-3.5-flash",
-                    "gemini-flash-lite-latest",
-                    "gemini-3.1-flash-lite",
-                    "gemini-3.5-flash-lite",
-                    "gemini-flash-latest"
+                    "gemini-3.5-flash"
                 ]
 
                 system_prompt = f"""

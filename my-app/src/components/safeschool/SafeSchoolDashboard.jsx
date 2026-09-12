@@ -234,7 +234,7 @@ export default function SafeSchoolDashboard({ setActiveTab }) {
       <div className="glass-panel" style={{ padding: '22px 28px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <h2 style={{ fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
+            <h2 style={{ fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
               <Flame color="#ef4444" size={24} /> SafeSchool India Threat Heatmap
             </h2>
             <span className="badge-purple" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -242,7 +242,7 @@ export default function SafeSchoolDashboard({ setActiveTab }) {
             </span>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Coarse region-level heat intensity derived from aggregated risk scores. <strong style={{ color: '#38bdf8' }}>Strict Zero-PII Policy:</strong> Coarse coordinates only, individual child locations are never displayed.
+            Coarse region-level heat intensity derived from aggregated risk scores. <strong style={{ color: '#0284c7' }}>Strict Zero-PII Policy:</strong> Coarse coordinates only, individual child locations are never displayed.
           </p>
         </div>
 
@@ -269,32 +269,32 @@ export default function SafeSchoolDashboard({ setActiveTab }) {
         <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 6px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 700, color: '#f8fafc' }}>
-              <MapPin size={18} color="#38bdf8" /> Coarse Region Heat Map (India)
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              <MapPin size={18} color="#0284c7" /> Coarse Region Heat Map (India)
             </div>
             
             {/* Heat Intensity Color Legend */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.72rem' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ef4444', fontWeight: 700 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#dc2626', fontWeight: 700 }}>
                 ● Critical (≥85)
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f97316', fontWeight: 700 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ea580c', fontWeight: 700 }}>
                 ● High (70-84)
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#eab308', fontWeight: 700 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#d97706', fontWeight: 700 }}>
                 ● Moderate (45-69)
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', fontWeight: 700 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#059669', fontWeight: 700 }}>
                 ● Low (&lt;45)
               </span>
             </div>
           </div>
 
           {/* Interactive Leaflet React Map */}
-          <div style={{ height: '520px', width: '100%', borderRadius: '14px', overflow: 'hidden', border: '1px solid var(--border-subtle)', position: 'relative' }}>
+          <div style={{ height: '520px', width: '100%', borderRadius: '14px', overflow: 'hidden', border: '1.5px solid rgba(14, 116, 189, 0.2)', position: 'relative' }}>
             {loading ? (
-              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', background: '#030712', color: 'var(--text-muted)' }}>
-                <RefreshCw className="animate-spin" size={32} color="#38bdf8" />
+              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', background: '#0b1329', color: '#94a3b8' }}>
+                <RefreshCw className="animate-spin" size={32} color="#0284c7" />
                 <span>Aggregating Supabase region scores into heatmap...</span>
               </div>
             ) : (
@@ -369,8 +369,8 @@ export default function SafeSchoolDashboard({ setActiveTab }) {
             )}
 
             {/* Floating Info Overlay */}
-            <div style={{ position: 'absolute', bottom: '12px', left: '12px', zIndex: 1000, background: 'rgba(7, 11, 22, 0.92)', backdropFilter: 'blur(8px)', padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--border-subtle)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              Click any regional circle to inspect risk metrics and affiliated schools.
+            <div style={{ position: 'absolute', bottom: '12px', left: '12px', zIndex: 1000, background: 'rgba(255, 255, 255, 0.94)', backdropFilter: 'blur(8px)', padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(14, 116, 189, 0.25)', fontSize: '0.74rem', color: 'var(--text-secondary)', boxShadow: '0 4px 14px rgba(15, 23, 42, 0.15)' }}>
+              💡 Click any regional circle to inspect risk metrics and affiliated schools.
             </div>
 
           </div>
@@ -387,13 +387,13 @@ export default function SafeSchoolDashboard({ setActiveTab }) {
                   Regional Intelligence Profile
                 </span>
                 
-                <h3 style={{ fontSize: '1.25rem', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
-                  <Globe color="#38bdf8" size={20} /> {selectedRegion.name}
+                <h3 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                  <Globe color="#0284c7" size={20} /> {selectedRegion.name}
                 </h3>
               </div>
 
               {/* Risk Level Badge & Score Meter */}
-              <div style={{ background: selectedRegion.riskDetails.bg, border: `1px solid ${selectedRegion.riskDetails.border}`, padding: '12px 16px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ background: selectedRegion.riskDetails.bg, border: `1.5px solid ${selectedRegion.riskDetails.border}`, padding: '12px 16px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: selectedRegion.riskDetails.color, fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase' }}>
                     {selectedRegion.riskDetails.label}
@@ -404,32 +404,32 @@ export default function SafeSchoolDashboard({ setActiveTab }) {
                 </div>
 
                 {/* Progress Bar */}
-                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: '6px', background: 'rgba(15, 23, 42, 0.1)', borderRadius: '3px', overflow: 'hidden' }}>
                   <div style={{ width: `${selectedRegion.avgRisk}%`, height: '100%', background: selectedRegion.riskDetails.color, transition: 'width 0.4s ease' }} />
                 </div>
               </div>
 
               {/* Key Aggregated Stats */}
-              <div style={{ background: '#090e1a', padding: '14px', borderRadius: '10px', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.82rem' }}>
+              <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1.5px solid rgba(14, 116, 189, 0.15)', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.82rem' }}>
                 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(14, 116, 189, 0.1)', paddingBottom: '8px' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Total Case Count:</span>
-                  <strong style={{ color: '#38bdf8', fontSize: '0.95rem' }}>{selectedRegion.caseCount} Incident(s)</strong>
+                  <strong style={{ color: '#0284c7', fontSize: '0.95rem' }}>{selectedRegion.caseCount} Incident(s)</strong>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(14, 116, 189, 0.1)', paddingBottom: '8px' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Dominant Cluster:</span>
-                  <strong style={{ color: '#f43f5e' }}>{selectedRegion.dominantCluster}</strong>
+                  <strong style={{ color: '#e11d48' }}>{selectedRegion.dominantCluster}</strong>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(14, 116, 189, 0.1)', paddingBottom: '8px' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Common Platform:</span>
-                  <strong style={{ color: '#a855f7' }}>{selectedRegion.commonPlatform}</strong>
+                  <strong style={{ color: '#7c3aed' }}>{selectedRegion.commonPlatform}</strong>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Highest Single Case Risk:</span>
-                  <strong style={{ color: '#ef4444' }}>{selectedRegion.maxRisk}%</strong>
+                  <strong style={{ color: '#dc2626' }}>{selectedRegion.maxRisk}%</strong>
                 </div>
 
               </div>
@@ -437,13 +437,13 @@ export default function SafeSchoolDashboard({ setActiveTab }) {
               {/* Affiliated Schools List */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <School size={16} color="#ec4899" /> Affiliated Schools in Region ({selectedRegion.schools.length}):
+                  <School size={16} color="#db2777" /> Affiliated Schools in Region ({selectedRegion.schools.length}):
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '140px', overflowY: 'auto' }}>
                   {selectedRegion.schools.length > 0 ? (
                     selectedRegion.schools.map((sch, idx) => (
-                      <div key={idx} style={{ background: 'rgba(236, 72, 153, 0.1)', border: '1px solid rgba(236, 72, 153, 0.25)', padding: '7px 10px', borderRadius: '6px', fontSize: '0.78rem', color: '#fbcfe8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div key={idx} style={{ background: '#fdf2f8', border: '1px solid #fbcfe8', padding: '8px 12px', borderRadius: '8px', fontSize: '0.8rem', color: '#9d174d', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
                         <span>🏫</span> {sch}
                       </div>
                     ))
@@ -456,8 +456,8 @@ export default function SafeSchoolDashboard({ setActiveTab }) {
               </div>
 
               {/* Actionable Preventive Advisory */}
-              <div className="glass-panel" style={{ padding: '14px', borderLeft: '3px solid #38bdf8', marginTop: 'auto' }}>
-                <h4 style={{ fontSize: '0.82rem', color: '#38bdf8', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div className="glass-panel" style={{ padding: '14px', borderLeft: '3px solid #0284c7', background: '#f8fafc', marginTop: 'auto' }}>
+                <h4 style={{ fontSize: '0.82rem', color: '#0284c7', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <BookOpen size={14} /> Preventive Action Plan
                 </h4>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>

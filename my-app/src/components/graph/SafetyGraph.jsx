@@ -928,16 +928,16 @@ export default function SafetyGraph({ setActiveTab }) {
                   fontWeight: 700,
                   background: selectedNode.type === 'cluster' ? 'rgba(244, 63, 94, 0.18)' :
                               selectedNode.type === 'tactic' ? 'rgba(168, 85, 247, 0.18)' :
-                              selectedNode.type === 'platform' ? 'rgba(6, 182, 212, 0.18)' : 'rgba(255,255,255,0.1)',
-                  color: selectedNode.type === 'cluster' ? '#fecdd3' :
-                         selectedNode.type === 'tactic' ? '#f3e8ff' :
-                         selectedNode.type === 'platform' ? '#cffafe' : selectedNode.color,
-                  border: `1px solid ${selectedNode.color}`
+                              selectedNode.type === 'platform' ? 'rgba(6, 182, 212, 0.18)' : 'rgba(2, 132, 199, 0.15)',
+                  color: selectedNode.type === 'cluster' ? '#be123c' :
+                         selectedNode.type === 'tactic' ? '#7e22ce' :
+                         selectedNode.type === 'platform' ? '#0e7490' : '#0369a1',
+                  border: `1.5px solid ${selectedNode.color}`
                 }}>
                   TIER {selectedNode.tier}: {selectedNode.tierName}
                 </span>
                 
-                <h3 style={{ fontSize: '1.15rem', color: '#f8fafc', marginTop: '8px', lineHeight: 1.3 }}>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', marginTop: '8px', lineHeight: 1.3 }}>
                   {selectedNode.label}
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -946,13 +946,13 @@ export default function SafetyGraph({ setActiveTab }) {
               </div>
 
               {selectedNode.type === 'case' ? (
-                <div style={{ background: '#090e1a', padding: '14px', borderRadius: '10px', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.82rem' }}>
+                <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1.5px solid rgba(14, 116, 189, 0.18)', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.82rem' }}>
                   
                   {/* Risk Badge */}
                   {(() => {
                     const badge = getCaseRiskBadge(selectedNode.rawCase.risk_score || 50);
                     return (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: badge.bg, border: `1px solid ${badge.border}`, padding: '6px 10px', borderRadius: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: badge.bg, border: `1.5px solid ${badge.border}`, padding: '6px 10px', borderRadius: '6px' }}>
                         <span style={{ color: badge.text, fontWeight: 700, fontSize: '0.75rem' }}>{badge.label}</span>
                         <span style={{ color: badge.color, fontWeight: 800, fontSize: '1rem' }}>{selectedNode.rawCase.risk_score}%</span>
                       </div>
@@ -960,8 +960,8 @@ export default function SafetyGraph({ setActiveTab }) {
                   })()}
 
                   <div>
-                    <span style={{ color: 'var(--text-muted)' }}>Original Report Text:</span>
-                    <p style={{ color: 'var(--text-primary)', marginTop: '4px', lineHeight: 1.4, fontStyle: 'italic', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '6px' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Original Report Text:</span>
+                    <p style={{ color: 'var(--text-primary)', marginTop: '4px', lineHeight: 1.4, fontStyle: 'italic', background: '#f0f9ff', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(14, 116, 189, 0.15)' }}>
                       "{selectedNode.rawCase.report_text}"
                     </p>
                   </div>
@@ -969,23 +969,23 @@ export default function SafetyGraph({ setActiveTab }) {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     <div>
                       <span style={{ color: 'var(--text-muted)' }}>Platform: </span>
-                      <strong style={{ color: '#38bdf8' }}>{selectedNode.rawCase.platform || 'N/A'}</strong>
+                      <strong style={{ color: '#0284c7' }}>{selectedNode.rawCase.platform || 'N/A'}</strong>
                     </div>
                     <div>
                       <span style={{ color: 'var(--text-muted)' }}>Region: </span>
-                      <strong style={{ color: '#f59e0b' }}>{selectedNode.rawCase.region || 'N/A'}</strong>
+                      <strong style={{ color: '#d97706' }}>{selectedNode.rawCase.region || 'N/A'}</strong>
                     </div>
                     <div>
                       <span style={{ color: 'var(--text-muted)' }}>School: </span>
-                      <strong style={{ color: '#ec4899' }}>{selectedNode.rawCase.school_name || 'N/A'}</strong>
+                      <strong style={{ color: '#db2777' }}>{selectedNode.rawCase.school_name || 'N/A'}</strong>
                     </div>
                     <div>
                       <span style={{ color: 'var(--text-muted)' }}>Language: </span>
-                      <span>{selectedNode.rawCase.language || 'en'}</span>
+                      <strong style={{ color: 'var(--text-primary)' }}>{selectedNode.rawCase.language || 'en'}</strong>
                     </div>
                     <div>
                       <span style={{ color: 'var(--text-muted)' }}>Age Bracket: </span>
-                      <span>{selectedNode.rawCase.age_bracket || 'UNDER_14'}</span>
+                      <strong style={{ color: 'var(--text-primary)' }}>{selectedNode.rawCase.age_bracket || 'UNDER_14'}</strong>
                     </div>
                   </div>
 
@@ -998,17 +998,17 @@ export default function SafetyGraph({ setActiveTab }) {
 
                 </div>
               ) : (
-                <div style={{ background: '#090e1a', padding: '14px', borderRadius: '10px', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.82rem' }}>
+                <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1.5px solid rgba(14, 116, 189, 0.18)', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.82rem' }}>
                   <div>
-                    <span style={{ color: 'var(--text-muted)' }}>Correlated Reports: </span>
-                    <strong style={{ color: selectedNode.color }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Correlated Reports: </span>
+                    <strong style={{ color: selectedNode.color, display: 'block', marginTop: '2px' }}>
                       {selectedNode.caseCount || 0} linked case(s) in `cases` table
                     </strong>
                   </div>
 
                   {selectedNode.description && (
                     <div>
-                      <span style={{ color: 'var(--text-muted)' }}>Pattern Insights: </span>
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Pattern Insights: </span>
                       <p style={{ color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.4 }}>
                         {selectedNode.description}
                       </p>

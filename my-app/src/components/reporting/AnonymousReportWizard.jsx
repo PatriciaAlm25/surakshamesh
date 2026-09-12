@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Lock, 
   Shield, 
@@ -6,25 +6,27 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   ArrowRight, 
-  ArrowLeft,
+  ArrowLeft, 
   FileText, 
   Copy, 
   Check, 
-  HelpCircle,
-  PhoneCall,
-  Globe,
-  MapPin,
-  Building,
-  User,
-  Calendar,
-  Share2,
-  Paperclip,
-  Network,
-  Scale
+  HelpCircle, 
+  PhoneCall, 
+  Globe, 
+  MapPin, 
+  Building, 
+  User, 
+  Calendar, 
+  Share2, 
+  Paperclip, 
+  Network, 
+  Scale,
+  Loader2
 } from 'lucide-react';
 import { StorageService } from '../../services/storageService';
 import { NgoRecommendationService } from '../../services/ngoRecommendationService';
 import { LegalMatchingService } from '../../services/legalMatchingService';
+import { SchoolDirectoryService, ALL_INDIAN_STATES } from '../../services/schoolDirectoryService';
 import confetti from 'canvas-confetti';
 
 const ONLINE_CATEGORIES = [
@@ -136,16 +138,78 @@ export default function AnonymousReportWizard({ setActiveTab }) {
   const [platformSurface, setPlatformSurface] = useState('Direct Message');
   
   // Step 5: Location
-  const [city, setCity] = useState('');
-  const [district, setDistrict] = useState('');
   const [state, setState] = useState('Maharashtra');
+  const [district, setDistrict] = useState('Pune');
+  const [city, setCity] = useState('Pune');
   const [locality, setLocality] = useState('');
+  
+  // Dynamic Dataset lists from UDISE+ API
+  const [districtsList, setDistrictsList] = useState([]);
+  const [citiesList, setCitiesList] = useState([]);
+  const [schoolsList, setSchoolsList] = useState([]);
+  const [schoolSearchQuery, setSchoolSearchQuery] = useState('');
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [isCustomSchool, setIsCustomSchool] = useState(false);
   
   // Step 6: About Affected Person
   const [ageBracket, setAgeBracket] = useState('14–17');
   const [affectedRole, setAffectedRole] = useState('School student');
   const [institutionName, setInstitutionName] = useState('');
   const [relationship, setRelationship] = useState('Online stranger');
+
+  // Fetch districts whenever State changes
+  useEffect(() => {
+    let isMounted = true;
+    const loadDistricts = () => {
+      if (!state) return;
+      setLoadingDistricts(true);
+      const list = SchoolDirectoryService.getDistricts(state);
+      if (isMounted) {
+        setDistrictsList(list);
+        setLoadingDistricts(false);
+        if (list.length > 0 && (!district || !list.includes(district))) {
+          setDistrict(list[0]);
+        }
+      }
+    };
+    loadDistricts();
+    return () => { isMounted = false; };
+  }, [state]);
+
+  // Fetch subdistricts & schools whenever State, District, or Search Query changes
+  useEffect(() => {
+    let isMounted = true;
+    const debounceTimer = setTimeout(async () => {
+      if (!state || !district) return;
+      setLoadingSchools(true);
+      const [cities, schools] = await Promise.all([
+        SchoolDirectoryService.getSubdistricts(state, district),
+        SchoolDirectoryService.searchSchools({ 
+          stateName: state, 
+          districtName: district, 
+          query: schoolSearchQuery,
+          limit: 60 
+        })
+      ]);
+      if (isMounted) {
+        setCitiesList(cities);
+        setSchoolsList(schools);
+        setLoadingSchools(false);
+        if (cities.length > 0 && !city) {
+          setCity(cities[0]);
+        }
+        if (schools.length > 0 && !institutionName && !isCustomSchool) {
+          setInstitutionName(schools[0].name);
+        }
+      }
+    }, 250);
+
+    return () => { 
+      isMounted = false; 
+      clearTimeout(debounceTimer);
+    };
+  }, [state, district, schoolSearchQuery]);
   
   // Step 7: What Happened? (Testimony)
   const [storyText, setStoryText] = useState('');
@@ -224,12 +288,26 @@ export default function AnonymousReportWizard({ setActiveTab }) {
     const caseCode = triageResult?.case_code || `SM-2026-${randomNum}`;
     const riskScore = triageResult?.risk_score || (immediateDanger.startsWith('Yes') ? 95 : 80);
 
-    const saved = StorageService.saveCase({
+    const casePayload = {
       caseCode,
+      environment,
       category: triageResult?.primary_threat_cluster || category.toUpperCase().replace(/\s+/g, '_'),
-      childAgeBracket: ageBracket,
+      tactics_observed: selectedTactics,
       platform: `${platform} (${platformSurface})`,
+      platformSurface,
+      city: city.trim(),
+      district: district.trim(),
+      state,
+      locality: locality.trim(),
+      childAgeBracket: ageBracket,
+      affectedRole,
+      institutionName: institutionName.trim(),
+      relationship,
       rawDescription: storyText || 'Invisible SOS anonymous report.',
+      evidence_type: hasEvidence,
+      timeframe,
+      isRepeated: isRepeated === 'Yes',
+      immediateDanger,
       aiRiskScore: riskScore,
       aiRiskLevel: triageResult?.risk_level || (riskScore >= 75 ? 'HIGH' : 'MEDIUM'),
       urgencyLevel: triageResult?.urgency_level || (riskScore >= 75 ? 'P1 - Immediate Intervention' : 'P2 - Moderate Review'),
@@ -241,7 +319,17 @@ export default function AnonymousReportWizard({ setActiveTab }) {
       regionZone: `${city || 'Metro'}, ${state}`,
       safetyGraph: triageResult?.safety_graph_nodes,
       statutoryFlags: triageResult?.case_structured_summary?.statutory_violation_flags
-    });
+    };
+
+    // 1. Save locally for instant offline UI responsiveness
+    const saved = StorageService.saveCase(casePayload);
+
+    // 2. Persist directly to Supabase cloud 'cases' table
+    try {
+      await StorageService.createSupabaseCase(casePayload);
+    } catch (supabaseErr) {
+      console.warn('Supabase case sync warning:', supabaseErr);
+    }
 
     const recommendedNgos = (triageResult?.recommended_ngos && triageResult.recommended_ngos.length > 0)
       ? triageResult.recommended_ngos
@@ -289,29 +377,30 @@ export default function AnonymousReportWizard({ setActiveTab }) {
   };
 
   return (
-    <div style={{ maxWidth: '940px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ maxWidth: '940px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '22px' }}>
       
       {/* Header & Anonymity Guarantee */}
       <div 
         className="glass-panel" 
         style={{ 
-          padding: '24px 28px', 
-          background: 'linear-gradient(135deg, rgba(8, 24, 48, 0.9) 0%, rgba(14, 38, 72, 0.8) 100%)',
-          border: '1px solid rgba(56, 189, 248, 0.35)',
+          padding: '28px', 
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(224,242,254,0.9) 100%)',
+          border: '1.5px solid rgba(14, 165, 233, 0.3)',
           borderRadius: '18px',
-          textAlign: 'center'
+          textAlign: 'center',
+          boxShadow: '0 4px 24px rgba(14, 116, 189, 0.1)'
         }}
       >
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 16px', background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '999px', marginBottom: '12px' }}>
-          <Lock size={15} color="#38bdf8" />
-          <span style={{ fontSize: '0.8rem', color: '#7dd3fc', fontWeight: 700 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 18px', background: 'rgba(14, 165, 233, 0.12)', border: '1.5px solid rgba(14, 165, 233, 0.35)', borderRadius: '999px', marginBottom: '14px' }}>
+          <Lock size={15} color="#0284c7" />
+          <span style={{ fontSize: '0.82rem', color: '#0284c7', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Invisible SOS — 100% Anonymous Reporting • Zero Tracking
           </span>
         </div>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: 800, background: 'linear-gradient(90deg, #e0f2fe, #38bdf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0 0 6px 0' }}>
+        <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
           Anonymous Report & Child Protection Intake
         </h2>
-        <p style={{ fontSize: '0.86rem', color: '#93c5fd', margin: '0 auto', maxWidth: '680px' }}>
+        <p style={{ fontSize: '0.92rem', color: '#334155', margin: '0 auto', maxWidth: '680px', lineHeight: 1.6 }}>
           Your name or exact address is <strong>never required</strong>. This form guides you step-by-step so verified advocates and safety experts can help protect you.
         </p>
       </div>
@@ -320,11 +409,11 @@ export default function AnonymousReportWizard({ setActiveTab }) {
       {immediateDanger.startsWith('Yes') && (
         <div 
           style={{ 
-            background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.95) 0%, rgba(153, 27, 27, 0.95) 100%)',
+            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
             border: '2px solid #fecaca',
             borderRadius: '16px',
-            padding: '20px 24px',
-            boxShadow: '0 10px 30px rgba(220, 38, 38, 0.4)',
+            padding: '22px 26px',
+            boxShadow: '0 10px 30px rgba(220, 38, 38, 0.35)',
             display: 'flex',
             flexDirection: 'column',
             gap: '12px',
@@ -334,21 +423,21 @@ export default function AnonymousReportWizard({ setActiveTab }) {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <AlertTriangle size={24} color="#fff" />
-            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#fff' }}>
               EMERGENCY: Urgent Immediate Help Active
             </h3>
           </div>
-          <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.5 }}>
+          <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.5 }}>
             If you are in danger right now, do not wait for a form response. Call emergency authorities immediately (toll-free in India):
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '6px' }}>
-            <a href="tel:1098" style={{ background: '#fff', color: '#991b1b', padding: '8px 18px', borderRadius: '10px', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem' }}>
+            <a href="tel:1098" style={{ background: '#fff', color: '#991b1b', padding: '10px 20px', borderRadius: '10px', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem', boxShadow: '0 4px 14px rgba(0,0,0,0.15)' }}>
               <PhoneCall size={16} /> Childline 1098 (24/7)
             </a>
-            <a href="tel:112" style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid #fff', color: '#fff', padding: '8px 16px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem' }}>
+            <a href="tel:112" style={{ background: 'rgba(255, 255, 255, 0.25)', border: '1.5px solid #fff', color: '#fff', padding: '10px 18px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}>
               <PhoneCall size={16} /> Police Emergency 112
             </a>
-            <a href="tel:1930" style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid #fff', color: '#fff', padding: '8px 16px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem' }}>
+            <a href="tel:1930" style={{ background: 'rgba(255, 255, 255, 0.25)', border: '1.5px solid #fff', color: '#fff', padding: '10px 18px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}>
               <Shield size={16} /> Cyber Crime 1930
             </a>
           </div>
@@ -357,19 +446,19 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
       {/* Step Indicator Progress Bar */}
       {currentStep <= 10 && (
-        <div style={{ background: 'rgba(8, 24, 48, 0.8)', padding: '14px 20px', borderRadius: '14px', border: '1px solid rgba(56, 189, 248, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ background: '#38bdf8', color: '#041122', width: '26px', height: '26px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem' }}>
+        <div style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '16px 22px', borderRadius: '16px', border: '1.5px solid rgba(14, 116, 189, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', boxShadow: '0 2px 12px rgba(14, 116, 189, 0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ background: 'linear-gradient(135deg, #0ea5e9, #2563eb)', color: '#ffffff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
               {currentStep}
             </span>
-            <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#e0f2fe' }}>
+            <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a' }}>
               Step {currentStep} of 10
             </span>
           </div>
-          <div style={{ flex: 1, minWidth: '150px', height: '6px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '999px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${(currentStep / 10) * 100}%`, background: 'linear-gradient(90deg, #38bdf8, #0284c7)', transition: 'width 0.3s ease' }} />
+          <div style={{ flex: 1, minWidth: '150px', height: '8px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${(currentStep / 10) * 100}%`, background: 'linear-gradient(90deg, #0ea5e9, #2563eb)', transition: 'width 0.3s ease' }} />
           </div>
-          <span style={{ fontSize: '0.78rem', color: '#93c5fd' }}>
+          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0284c7' }}>
             {currentStep === 1 && 'Where did this happen?'}
             {currentStep === 2 && 'Kind of problem'}
             {currentStep === 3 && 'Tactics / How it happened'}
@@ -386,17 +475,17 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
       {/* STEP 1: Online vs Offline */}
       {currentStep === 1 && (
-        <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', color: '#f0f9ff', margin: '0 0 4px 0' }}>Step 1 — Where did this happen?</h3>
-            <p style={{ fontSize: '0.84rem', color: '#93c5fd', margin: 0 }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#0f172a', margin: '0 0 6px 0', fontWeight: 800 }}>Step 1 — Where did this happen?</h3>
+            <p style={{ fontSize: '0.9rem', color: '#334155', margin: 0 }}>
               Select whether the incident took place on the internet/social media or in the physical world. Your name is not required.
             </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             {[
-              { id: 'Online', title: '🌐 Online', desc: 'Social media, chat apps, gaming platforms, forums, or websites' },
+              { id: 'Online', title: '🌐 Online (Digital)', desc: 'Social media, chat apps, gaming platforms, forums, or websites' },
               { id: 'Offline', title: '🏫 Offline (In Person)', desc: 'School, college, home, tuition, hostel, or public places' }
             ].map(item => {
               const active = environment === item.id;
@@ -406,16 +495,17 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                   onClick={() => setEnvironment(item.id)}
                   style={{
                     textAlign: 'left',
-                    padding: '20px',
-                    borderRadius: '14px',
-                    background: active ? 'rgba(56, 189, 248, 0.2)' : 'rgba(8, 22, 44, 0.8)',
-                    border: active ? '2px solid #38bdf8' : '1px solid rgba(56, 189, 248, 0.25)',
+                    padding: '22px',
+                    borderRadius: '16px',
+                    background: active ? 'rgba(14, 165, 233, 0.12)' : '#ffffff',
+                    border: active ? '2px solid #0284c7' : '1.5px solid rgba(14, 116, 189, 0.2)',
                     cursor: 'pointer',
-                    boxShadow: active ? '0 0 20px rgba(56, 189, 248, 0.25)' : 'none'
+                    boxShadow: active ? '0 4px 20px rgba(14, 165, 233, 0.18)' : '0 2px 8px rgba(14, 116, 189, 0.04)',
+                    transition: 'all 0.2s ease'
                   }}
                 >
-                  <h4 style={{ margin: '0 0 6px 0', fontSize: '1.1rem', color: active ? '#38bdf8' : '#f0f9ff' }}>{item.title}</h4>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>{item.desc}</p>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '1.15rem', color: active ? '#0284c7' : '#0f172a', fontWeight: 800 }}>{item.title}</h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#475569', lineHeight: 1.45 }}>{item.desc}</p>
                 </button>
               );
             })}
@@ -431,17 +521,17 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
       {/* STEP 2: Kind of problem (Filtered by Online vs Offline) */}
       {currentStep === 2 && (
-        <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', color: '#f0f9ff', margin: '0 0 4px 0' }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#0f172a', margin: '0 0 6px 0', fontWeight: 800 }}>
               Step 2 — What kind of problem are you reporting? ({environment})
             </h3>
-            <p style={{ fontSize: '0.84rem', color: '#93c5fd', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: '#334155', margin: 0 }}>
               Select the primary issue that best matches what you or the affected child experienced:
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
             {(environment === 'Online' ? ONLINE_CATEGORIES : OFFLINE_CATEGORIES).map(cat => {
               const active = category === cat;
               return (
@@ -449,15 +539,16 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                   key={cat}
                   onClick={() => setCategory(cat)}
                   style={{
-                    padding: '12px 16px',
-                    borderRadius: '10px',
+                    padding: '14px 18px',
+                    borderRadius: '12px',
                     textAlign: 'left',
-                    background: active ? 'rgba(56, 189, 248, 0.22)' : 'rgba(8, 22, 44, 0.7)',
-                    border: active ? '1.5px solid #38bdf8' : '1px solid rgba(56, 189, 248, 0.2)',
-                    color: active ? '#38bdf8' : '#e0f2fe',
-                    fontSize: '0.84rem',
-                    fontWeight: active ? 700 : 500,
-                    cursor: 'pointer'
+                    background: active ? 'rgba(14, 165, 233, 0.14)' : '#ffffff',
+                    border: active ? '2px solid #0284c7' : '1.5px solid rgba(14, 116, 189, 0.2)',
+                    color: active ? '#0284c7' : '#0f172a',
+                    fontSize: '0.88rem',
+                    fontWeight: active ? 800 : 600,
+                    cursor: 'pointer',
+                    boxShadow: active ? '0 4px 14px rgba(14, 165, 233, 0.15)' : '0 1px 4px rgba(0,0,0,0.03)'
                   }}
                 >
                   {cat}
@@ -479,17 +570,17 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
       {/* STEP 3: Tactics (Select all that apply) */}
       {currentStep === 3 && (
-        <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', color: '#f0f9ff', margin: '0 0 4px 0' }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#0f172a', margin: '0 0 6px 0', fontWeight: 800 }}>
               Step 3 — How did it happen? (Tactics / Patterns)
             </h3>
-            <p style={{ fontSize: '0.84rem', color: '#93c5fd', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: '#334155', margin: 0 }}>
               Select all behavioral patterns that apply to the situation:
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
             {TACTICS_LIST.map(tactic => {
               const checked = selectedTactics.includes(tactic);
               return (
@@ -497,23 +588,24 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                   key={tactic}
                   onClick={() => toggleTactic(tactic)}
                   style={{
-                    padding: '12px 14px',
-                    borderRadius: '10px',
-                    background: checked ? 'rgba(56, 189, 248, 0.2)' : 'rgba(8, 22, 44, 0.7)',
-                    border: checked ? '1.5px solid #38bdf8' : '1px solid rgba(56, 189, 248, 0.2)',
+                    padding: '14px 16px',
+                    borderRadius: '12px',
+                    background: checked ? 'rgba(14, 165, 233, 0.12)' : '#ffffff',
+                    border: checked ? '2px solid #0284c7' : '1.5px solid rgba(14, 116, 189, 0.2)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px',
-                    cursor: 'pointer'
+                    gap: '12px',
+                    cursor: 'pointer',
+                    boxShadow: checked ? '0 4px 14px rgba(14, 165, 233, 0.12)' : '0 1px 4px rgba(0,0,0,0.03)'
                   }}
                 >
                   <input
                     type="checkbox"
                     checked={checked}
                     onChange={() => {}}
-                    style={{ accentColor: '#38bdf8', cursor: 'pointer' }}
+                    style={{ accentColor: '#0284c7', width: '18px', height: '18px', cursor: 'pointer' }}
                   />
-                  <span style={{ fontSize: '0.82rem', color: checked ? '#f0f9ff' : '#cbd5e1', fontWeight: checked ? 600 : 400 }}>
+                  <span style={{ fontSize: '0.88rem', color: checked ? '#0284c7' : '#0f172a', fontWeight: checked ? 700 : 500 }}>
                     {tactic}
                   </span>
                 </div>
@@ -534,12 +626,12 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
       {/* STEP 4: Platform & Surface */}
       {currentStep === 4 && (
-        <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', color: '#f0f9ff', margin: '0 0 4px 0' }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#0f172a', margin: '0 0 6px 0', fontWeight: 800 }}>
               Step 4 — Where did it happen? ({environment})
             </h3>
-            <p style={{ fontSize: '0.84rem', color: '#93c5fd', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: '#334155', margin: 0 }}>
               Specify the exact platform or physical setting where the incident took place:
             </p>
           </div>
@@ -547,26 +639,26 @@ export default function AnonymousReportWizard({ setActiveTab }) {
           {environment === 'Online' ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
-                <label style={{ fontSize: '0.8rem', color: '#93c5fd', display: 'block', marginBottom: '6px' }}>
+                <label style={{ fontSize: '0.84rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
                   Platform Name:
                 </label>
                 <select 
                   value={platform} 
                   onChange={e => setPlatform(e.target.value)}
-                  style={{ width: '100%', padding: '10px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', color: '#fff' }}
+                  style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a', fontWeight: 600 }}
                 >
                   {ONLINE_PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', color: '#93c5fd', display: 'block', marginBottom: '6px' }}>
+                <label style={{ fontSize: '0.84rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
                   Which part of the platform?
                 </label>
                 <select 
                   value={platformSurface} 
                   onChange={e => setPlatformSurface(e.target.value)}
-                  style={{ width: '100%', padding: '10px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', color: '#fff' }}
+                  style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a', fontWeight: 600 }}
                 >
                   {ONLINE_SURFACES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
@@ -574,7 +666,7 @@ export default function AnonymousReportWizard({ setActiveTab }) {
             </div>
           ) : (
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#93c5fd', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '0.84rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
                 Physical Location Type:
               </label>
               <select 
@@ -583,7 +675,7 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                   setPlatform(e.target.value);
                   setPlatformSurface(e.target.value);
                 }}
-                style={{ width: '100%', padding: '10px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', color: '#fff' }}
+                style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a', fontWeight: 600 }}
               >
                 {OFFLINE_LOCATIONS.map(loc => <option key={loc} value={loc}>{loc}</option>)}
               </select>
@@ -603,70 +695,80 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
       {/* STEP 5: Location Jurisdiction */}
       {currentStep === 5 && (
-        <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', color: '#f0f9ff', margin: '0 0 4px 0' }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#0f172a', margin: '0 0 6px 0', fontWeight: 800 }}>
               Step 5 — Location (City, District, State)
             </h3>
-            <p style={{ fontSize: '0.84rem', color: '#93c5fd', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: '#334155', margin: 0 }}>
               This information is solely used to route the report to the local district child protection ecosystem.
             </p>
           </div>
 
-          <div style={{ background: 'rgba(234, 179, 8, 0.12)', border: '1px solid rgba(234, 179, 8, 0.4)', borderRadius: '10px', padding: '10px 14px', fontSize: '0.8rem', color: '#fde047' }}>
+          <div style={{ background: 'rgba(217, 119, 6, 0.1)', border: '1.5px solid rgba(217, 119, 6, 0.35)', borderRadius: '12px', padding: '12px 16px', fontSize: '0.85rem', color: '#92400e' }}>
             ⚠️ <strong>Privacy Guardrail:</strong> Do NOT enter your house number or exact street address. Only general city and district are needed.
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {/* 1. STATE SELECTOR */}
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#93c5fd', display: 'block', marginBottom: '4px' }}>
-                City / Town:
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Pune, Mumbai, Jaipur..."
-                value={city}
-                onChange={e => setCity(e.target.value)}
-                style={{ width: '100%', padding: '10px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', color: '#fff' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: '0.8rem', color: '#93c5fd', display: 'block', marginBottom: '4px' }}>
-                District:
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Pune District, Thane..."
-                value={district}
-                onChange={e => setDistrict(e.target.value)}
-                style={{ width: '100%', padding: '10px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', color: '#fff' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: '0.8rem', color: '#93c5fd', display: 'block', marginBottom: '4px' }}>
-                State:
+              <label style={{ fontSize: '0.84rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                State / Union Territory:
               </label>
               <select
                 value={state}
                 onChange={e => setState(e.target.value)}
-                style={{ width: '100%', padding: '10px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', color: '#fff' }}
+                style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a', fontWeight: 600 }}
               >
-                {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                {ALL_INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
 
+            {/* 2. DISTRICT SELECTOR (Cascading) */}
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#93c5fd', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '0.84rem', color: '#1e293b', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span>District:</span>
+                {loadingDistricts && <span style={{ fontSize: '0.75rem', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '4px' }}><Loader2 size={12} className="animate-spin" /> Loading districts...</span>}
+              </label>
+              <select
+                value={district}
+                onChange={e => setDistrict(e.target.value)}
+                style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a', fontWeight: 600 }}
+              >
+                {districtsList.map(d => <option key={d} value={d}>{d}</option>)}
+                <option value="Other District">Other / Unlisted District</option>
+              </select>
+            </div>
+
+            {/* 3. CITY / SUBDISTRICT SELECTOR */}
+            <div>
+              <label style={{ fontSize: '0.84rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                City / Town / Block:
+              </label>
+              <input
+                type="text"
+                list="cities-datalist"
+                placeholder="Select or type City / Block..."
+                value={city}
+                onChange={e => setCity(e.target.value)}
+                style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a' }}
+              />
+              <datalist id="cities-datalist">
+                {citiesList.map((c, i) => <option key={`${c}-${i}`} value={c} />)}
+              </datalist>
+            </div>
+
+            {/* 4. LOCALITY / AREA */}
+            <div>
+              <label style={{ fontSize: '0.84rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
                 Optional Locality / Area:
               </label>
               <input
                 type="text"
-                placeholder="e.g. Kothrud, Bandra West..."
+                placeholder="e.g. Kothrud, Bandra West, Sector 15..."
                 value={locality}
                 onChange={e => setLocality(e.target.value)}
-                style={{ width: '100%', padding: '10px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', color: '#fff' }}
+                style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a' }}
               />
             </div>
           </div>
@@ -684,25 +786,25 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
       {/* STEP 6: About the person affected */}
       {currentStep === 6 && (
-        <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', color: '#f0f9ff', margin: '0 0 4px 0' }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#0f172a', margin: '0 0 6px 0', fontWeight: 800 }}>
               Step 6 — About the person affected
             </h3>
-            <p style={{ fontSize: '0.84rem', color: '#93c5fd', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: '#334155', margin: 0 }}>
               Help advocates understand the age and institutional context to provide age-appropriate safety care:
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#93c5fd', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '0.84rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
                 Age Group:
               </label>
               <select
                 value={ageBracket}
                 onChange={e => setAgeBracket(e.target.value)}
-                style={{ width: '100%', padding: '10px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', color: '#fff' }}
+                style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a', fontWeight: 600 }}
               >
                 <option value="Under 10">Under 10</option>
                 <option value="10–13">10–13</option>
@@ -713,13 +815,13 @@ export default function AnonymousReportWizard({ setActiveTab }) {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#93c5fd', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '0.84rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
                 What best describes them?
               </label>
               <select
                 value={affectedRole}
                 onChange={e => setAffectedRole(e.target.value)}
-                style={{ width: '100%', padding: '10px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', color: '#fff' }}
+                style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a', fontWeight: 600 }}
               >
                 <option value="School student">School student</option>
                 <option value="College student">College student</option>
@@ -729,27 +831,91 @@ export default function AnonymousReportWizard({ setActiveTab }) {
               </select>
             </div>
 
-            <div>
-              <label style={{ fontSize: '0.8rem', color: '#93c5fd', display: 'block', marginBottom: '4px' }}>
-                School / College / Workplace Name (Optional):
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. St. Xavier's High School"
-                value={institutionName}
-                onChange={e => setInstitutionName(e.target.value)}
-                style={{ width: '100%', padding: '10px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', color: '#fff' }}
-              />
+            {/* DYNAMIC SCHOOL / INSTITUTION SELECTOR (UDISE+ 1.37M Directory) */}
+            <div style={{ gridColumn: 'span 2' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '0.84rem', color: '#1e293b', fontWeight: 700 }}>
+                  School / College / Institution (UDISE+ Directory for {district || state}):
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsCustomSchool(!isCustomSchool)}
+                  style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}
+                >
+                  {isCustomSchool ? '← Choose from Directory' : '+ Type Custom School'}
+                </button>
+              </div>
+
+              {isCustomSchool ? (
+                <input
+                  type="text"
+                  placeholder="Type your exact School / College name..."
+                  value={institutionName}
+                  onChange={e => setInstitutionName(e.target.value)}
+                  style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a' }}
+                />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {/* Live Search Filter Box */}
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      placeholder={`🔍 Type school name to search in ${district || state}... (e.g. St. Xavier, DPS, KV, Model)`}
+                      value={schoolSearchQuery}
+                      onChange={e => setSchoolSearchQuery(e.target.value)}
+                      style={{ 
+                        width: '100%', 
+                        padding: '10px 14px', 
+                        background: '#f8fafc', 
+                        border: '1.5px solid #cbd5e1', 
+                        borderRadius: '8px', 
+                        fontSize: '0.85rem',
+                        color: '#0f172a'
+                      }}
+                    />
+                  </div>
+
+                  {/* Dropdown with results */}
+                  <select
+                    value={institutionName}
+                    onChange={e => {
+                      if (e.target.value === '__OTHER__') {
+                        setIsCustomSchool(true);
+                        setInstitutionName('');
+                      } else {
+                        setInstitutionName(e.target.value);
+                      }
+                    }}
+                    style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a', fontWeight: 600 }}
+                  >
+                    <option value="">
+                      {loadingSchools ? 'Loading schools...' : `-- Select school (${schoolsList.length} matches in ${district || state}) --`}
+                    </option>
+                    {schoolsList.map((sch, i) => (
+                      <option key={`${sch.name}-${i}`} value={sch.name}>
+                        {sch.name} {sch.code && sch.code !== 'UDISE-IND' ? `[UDISE: ${sch.code}]` : ''} {sch.village ? `— ${sch.village}` : ''}
+                      </option>
+                    ))}
+                    <option value="__OTHER__">+ My school is not listed (Type manually)</option>
+                  </select>
+
+                  {loadingSchools && (
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Loader2 size={12} className="animate-spin" /> Searching India Data Portal UDISE+ directory...
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div>
-              <label style={{ fontSize: '0.8rem', color: '#93c5fd', display: 'block', marginBottom: '4px' }}>
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={{ fontSize: '0.84rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
                 Relationship to the person involved:
               </label>
               <select
                 value={relationship}
                 onChange={e => setRelationship(e.target.value)}
-                style={{ width: '100%', padding: '10px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', color: '#fff' }}
+                style={{ width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '10px', color: '#0f172a', fontWeight: 600 }}
               >
                 <option value="Online stranger">Online stranger</option>
                 <option value="Friend / Classmate">Friend / Classmate</option>
@@ -778,12 +944,12 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
       {/* STEP 7: What Happened? (Testimony in Child's Own Words) */}
       {currentStep === 7 && (
-        <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', color: '#f0f9ff', margin: '0 0 4px 0' }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#0f172a', margin: '0 0 6px 0', fontWeight: 800 }}>
               Step 7 — Tell us what happened in your own words
             </h3>
-            <p style={{ fontSize: '0.84rem', color: '#93c5fd', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: '#334155', margin: 0 }}>
               You can write in English, Hindi, Marathi, Konkani, Hinglish, or any language you are comfortable with.
             </p>
           </div>
@@ -793,7 +959,7 @@ export default function AnonymousReportWizard({ setActiveTab }) {
             value={storyText}
             onChange={e => setStoryText(e.target.value)}
             placeholder="Example: Someone on Instagram started talking to me. Later they asked for private photos and threatened to share them if I didn't send more. They told me not to tell my parents or teachers..."
-            style={{ width: '100%', padding: '14px', background: 'rgba(8, 22, 44, 0.9)', border: '1px solid rgba(56, 189, 248, 0.35)', borderRadius: '12px', color: '#f0f9ff', fontSize: '0.9rem', lineHeight: 1.5, resize: 'vertical' }}
+            style={{ width: '100%', padding: '16px', background: '#ffffff', border: '1.5px solid var(--border-medium)', borderRadius: '12px', color: '#0f172a', fontSize: '0.94rem', lineHeight: 1.6, resize: 'vertical' }}
           />
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
@@ -809,22 +975,22 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
       {/* STEP 8: Evidence */}
       {currentStep === 8 && (
-        <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', color: '#f0f9ff', margin: '0 0 4px 0' }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#0f172a', margin: '0 0 6px 0', fontWeight: 800 }}>
               Step 8 — Do you have evidence?
             </h3>
-            <p style={{ fontSize: '0.84rem', color: '#93c5fd', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: '#334155', margin: 0 }}>
               Evidence helps forensic responders take action against perpetrators.
             </p>
           </div>
 
-          <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '10px', padding: '10px 14px', fontSize: '0.8rem', color: '#fca5a5' }}>
+          <div style={{ background: 'rgba(220, 38, 38, 0.08)', border: '1.5px solid rgba(220, 38, 38, 0.3)', borderRadius: '12px', padding: '12px 16px', fontSize: '0.85rem', color: '#991b1b' }}>
             ⚠️ <strong>Security Notice:</strong> Never upload passwords, OTPs, Aadhaar numbers, or bank details.
           </div>
 
           <div>
-            <label style={{ fontSize: '0.82rem', color: '#93c5fd', display: 'block', marginBottom: '8px' }}>
+            <label style={{ fontSize: '0.86rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '10px' }}>
               Do you have evidence available?
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -833,13 +999,14 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                   key={opt}
                   onClick={() => setHasEvidence(opt)}
                   style={{
-                    padding: '10px 16px',
-                    borderRadius: '10px',
-                    background: hasEvidence === opt ? 'rgba(56, 189, 248, 0.25)' : 'rgba(8, 22, 44, 0.7)',
-                    border: hasEvidence === opt ? '1.5px solid #38bdf8' : '1px solid rgba(56, 189, 248, 0.25)',
-                    color: hasEvidence === opt ? '#38bdf8' : '#e0f2fe',
-                    fontWeight: hasEvidence === opt ? 700 : 500,
-                    cursor: 'pointer'
+                    padding: '12px 18px',
+                    borderRadius: '12px',
+                    background: hasEvidence === opt ? 'rgba(14, 165, 233, 0.14)' : '#ffffff',
+                    border: hasEvidence === opt ? '2px solid #0284c7' : '1.5px solid rgba(14, 116, 189, 0.2)',
+                    color: hasEvidence === opt ? '#0284c7' : '#0f172a',
+                    fontWeight: hasEvidence === opt ? 800 : 500,
+                    cursor: 'pointer',
+                    fontSize: '0.88rem'
                   }}
                 >
                   {opt}
@@ -850,10 +1017,10 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
           {hasEvidence === 'Yes' && (
             <div>
-              <label style={{ fontSize: '0.82rem', color: '#93c5fd', display: 'block', marginBottom: '8px' }}>
+              <label style={{ fontSize: '0.86rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '10px' }}>
                 Select types of evidence available:
               </label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                 {['Screenshot', 'Image', 'Video', 'Document', 'Chat export'].map(t => {
                   const active = evidenceTypes.includes(t);
                   return (
@@ -861,13 +1028,14 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                       key={t}
                       onClick={() => toggleEvidence(t)}
                       style={{
-                        padding: '8px 14px',
-                        borderRadius: '8px',
-                        background: active ? 'rgba(56, 189, 248, 0.25)' : 'rgba(15, 23, 42, 0.6)',
-                        border: active ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.15)',
-                        color: active ? '#38bdf8' : '#94a3b8',
+                        padding: '10px 16px',
+                        borderRadius: '10px',
+                        background: active ? 'rgba(14, 165, 233, 0.14)' : '#ffffff',
+                        border: active ? '1.5px solid #0284c7' : '1.5px solid rgba(14, 116, 189, 0.2)',
+                        color: active ? '#0284c7' : '#334155',
                         cursor: 'pointer',
-                        fontSize: '0.8rem'
+                        fontSize: '0.85rem',
+                        fontWeight: active ? 700 : 500
                       }}
                     >
                       {active ? '✓ ' : '+ '}{t}
@@ -891,21 +1059,21 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
       {/* STEP 9: Timing & Frequency */}
       {currentStep === 9 && (
-        <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', color: '#f0f9ff', margin: '0 0 4px 0' }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#0f172a', margin: '0 0 6px 0', fontWeight: 800 }}>
               Step 9 — When did this happen?
             </h3>
-            <p style={{ fontSize: '0.84rem', color: '#93c5fd', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: '#334155', margin: 0 }}>
               Timeline helps responders assess whether an incident is ongoing or historical.
             </p>
           </div>
 
           <div>
-            <label style={{ fontSize: '0.82rem', color: '#93c5fd', display: 'block', marginBottom: '8px' }}>
+            <label style={{ fontSize: '0.86rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '10px' }}>
               When did this occur?
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
               {[
                 'Today',
                 'In the last few days',
@@ -918,12 +1086,13 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                   key={tf}
                   onClick={() => setTimeframe(tf)}
                   style={{
-                    padding: '10px 14px',
-                    borderRadius: '10px',
-                    background: timeframe === tf ? 'rgba(56, 189, 248, 0.25)' : 'rgba(8, 22, 44, 0.7)',
-                    border: timeframe === tf ? '1.5px solid #38bdf8' : '1px solid rgba(56, 189, 248, 0.2)',
-                    color: timeframe === tf ? '#38bdf8' : '#e0f2fe',
-                    fontSize: '0.82rem',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    background: timeframe === tf ? 'rgba(14, 165, 233, 0.14)' : '#ffffff',
+                    border: timeframe === tf ? '2px solid #0284c7' : '1.5px solid rgba(14, 116, 189, 0.2)',
+                    color: timeframe === tf ? '#0284c7' : '#0f172a',
+                    fontSize: '0.86rem',
+                    fontWeight: timeframe === tf ? 800 : 500,
                     cursor: 'pointer'
                   }}
                 >
@@ -934,22 +1103,23 @@ export default function AnonymousReportWizard({ setActiveTab }) {
           </div>
 
           <div>
-            <label style={{ fontSize: '0.82rem', color: '#93c5fd', display: 'block', marginBottom: '8px' }}>
+            <label style={{ fontSize: '0.86rem', color: '#1e293b', fontWeight: 700, display: 'block', marginBottom: '10px' }}>
               Has this happened repeatedly?
             </label>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
               {['Yes', 'No', "I'm not sure"].map(rep => (
                 <button
                   key={rep}
                   onClick={() => setIsRepeated(rep)}
                   style={{
-                    padding: '10px 20px',
-                    borderRadius: '10px',
-                    background: isRepeated === rep ? 'rgba(56, 189, 248, 0.25)' : 'rgba(8, 22, 44, 0.7)',
-                    border: isRepeated === rep ? '1.5px solid #38bdf8' : '1px solid rgba(56, 189, 248, 0.2)',
-                    color: isRepeated === rep ? '#38bdf8' : '#e0f2fe',
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    background: isRepeated === rep ? 'rgba(14, 165, 233, 0.14)' : '#ffffff',
+                    border: isRepeated === rep ? '2px solid #0284c7' : '1.5px solid rgba(14, 116, 189, 0.2)',
+                    color: isRepeated === rep ? '#0284c7' : '#0f172a',
                     cursor: 'pointer',
-                    fontSize: '0.84rem'
+                    fontSize: '0.88rem',
+                    fontWeight: isRepeated === rep ? 800 : 500
                   }}
                 >
                   {rep}
@@ -971,17 +1141,17 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
       {/* STEP 10: Immediate Safety Check & Final Review */}
       {currentStep === 10 && (
-        <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
+        <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', color: '#f0f9ff', margin: '0 0 4px 0' }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#0f172a', margin: '0 0 6px 0', fontWeight: 800 }}>
               Step 10 — Immediate safety check
             </h3>
-            <p style={{ fontSize: '0.84rem', color: '#93c5fd', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: '#334155', margin: 0 }}>
               Are you or the affected child in immediate danger right now?
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
             {[
               { id: 'Yes - I need urgent help', label: '🔴 Yes — I need urgent help', desc: 'Active physical threat or immediate crisis' },
               { id: 'No', label: '🟢 No', desc: 'Not in active physical danger right now' },
@@ -993,18 +1163,19 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                   key={item.id}
                   onClick={() => setImmediateDanger(item.id)}
                   style={{
-                    padding: '16px',
-                    borderRadius: '12px',
-                    background: active ? 'rgba(56, 189, 248, 0.22)' : 'rgba(8, 22, 44, 0.8)',
-                    border: active ? '2px solid #38bdf8' : '1px solid rgba(56, 189, 248, 0.25)',
+                    padding: '18px',
+                    borderRadius: '14px',
+                    background: active ? 'rgba(14, 165, 233, 0.12)' : '#ffffff',
+                    border: active ? '2px solid #0284c7' : '1.5px solid rgba(14, 116, 189, 0.2)',
                     textAlign: 'left',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    boxShadow: active ? '0 4px 16px rgba(14, 165, 233, 0.15)' : '0 1px 4px rgba(0,0,0,0.03)'
                   }}
                 >
-                  <strong style={{ fontSize: '0.92rem', color: active ? '#38bdf8' : '#f0f9ff', display: 'block', marginBottom: '4px' }}>
+                  <strong style={{ fontSize: '0.95rem', color: active ? '#0284c7' : '#0f172a', display: 'block', marginBottom: '4px', fontWeight: 800 }}>
                     {item.label}
                   </strong>
-                  <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                  <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
                     {item.desc}
                   </span>
                 </button>
@@ -1013,13 +1184,13 @@ export default function AnonymousReportWizard({ setActiveTab }) {
           </div>
 
           {/* Quick Summary of Report */}
-          <div style={{ background: 'rgba(8, 24, 48, 0.9)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.3)', fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ color: '#38bdf8', fontWeight: 700 }}>Summary of Anonymous Intake:</span>
-            <div style={{ color: '#e0f2fe' }}>• <strong>Environment:</strong> {environment} ({platform} - {platformSurface})</div>
-            <div style={{ color: '#e0f2fe' }}>• <strong>Issue Category:</strong> {category}</div>
-            <div style={{ color: '#e0f2fe' }}>• <strong>Jurisdiction:</strong> {city || 'City not entered'}, {state}</div>
-            <div style={{ color: '#e0f2fe' }}>• <strong>Affected Demographics:</strong> {ageBracket}, {affectedRole} {institutionName ? `(${institutionName})` : ''}</div>
-            <div style={{ color: '#e0f2fe' }}>• <strong>Tactics Identified:</strong> {selectedTactics.length > 0 ? selectedTactics.join(', ') : 'None selected'}</div>
+          <div style={{ background: '#f8fafc', padding: '18px 22px', borderRadius: '14px', border: '1.5px solid rgba(14, 116, 189, 0.2)', fontSize: '0.88rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ color: '#0284c7', fontWeight: 800, fontSize: '0.95rem' }}>Summary of Anonymous Intake:</span>
+            <div style={{ color: '#0f172a' }}>• <strong>Environment:</strong> {environment} ({platform} - {platformSurface})</div>
+            <div style={{ color: '#0f172a' }}>• <strong>Issue Category:</strong> {category}</div>
+            <div style={{ color: '#0f172a' }}>• <strong>Jurisdiction:</strong> {city || 'City not entered'}, {state}</div>
+            <div style={{ color: '#0f172a' }}>• <strong>Affected Demographics:</strong> {ageBracket}, {affectedRole} {institutionName ? `(${institutionName})` : ''}</div>
+            <div style={{ color: '#0f172a' }}>• <strong>Tactics Identified:</strong> {selectedTactics.length > 0 ? selectedTactics.join(', ') : 'None selected'}</div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
@@ -1030,7 +1201,7 @@ export default function AnonymousReportWizard({ setActiveTab }) {
               className="btn-danger" 
               onClick={handleSubmitReport}
               disabled={isSubmitting}
-              style={{ padding: '12px 28px', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+              style={{ padding: '14px 30px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               {isSubmitting ? (
                 <>Analyzing with Gemini AI...</>
@@ -1047,121 +1218,122 @@ export default function AnonymousReportWizard({ setActiveTab }) {
         <div 
           className="glass-panel-glow" 
           style={{ 
-            padding: '36px', 
-            borderRadius: '20px',
-            border: '2px solid rgba(56, 189, 248, 0.4)',
-            background: 'radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.15), transparent 75%), rgba(6, 16, 33, 0.95)',
+            padding: '40px', 
+            borderRadius: '24px',
+            border: '2px solid rgba(14, 165, 233, 0.35)',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(224,242,254,0.95) 100%)',
             display: 'flex', 
             flexDirection: 'column', 
-            gap: '24px' 
+            gap: '26px',
+            boxShadow: '0 12px 40px rgba(14, 116, 189, 0.15)'
           }}
         >
           <div style={{ textAlign: 'center' }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
-              <CheckCircle2 size={36} color="#34d399" />
+            <div style={{ width: '68px', height: '68px', borderRadius: '50%', background: 'rgba(5, 150, 105, 0.12)', border: '2px solid rgba(5, 150, 105, 0.3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+              <CheckCircle2 size={40} color="#059669" />
             </div>
-            <h2 style={{ fontSize: '1.7rem', color: '#34d399', margin: '0 0 6px 0' }}>
+            <h2 style={{ fontSize: '1.85rem', color: '#047857', margin: '0 0 6px 0', fontWeight: 800 }}>
               Report Safely Registered & Encrypted!
             </h2>
-            <p style={{ fontSize: '0.88rem', color: '#93c5fd', maxWidth: '560px', margin: '0 auto' }}>
+            <p style={{ fontSize: '0.92rem', color: '#334155', maxWidth: '600px', margin: '0 auto', lineHeight: 1.5 }}>
               Your report has been analyzed by Gemini AI and routed to verified child advocates. Save your Anonymous Case ID below:
             </p>
           </div>
 
           {/* Anonymous Case Code Box */}
-          <div style={{ background: '#090e1a', border: '2px dashed #38bdf8', borderRadius: '16px', padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+          <div style={{ background: '#f8fafc', border: '2px dashed #0284c7', borderRadius: '18px', padding: '24px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', boxShadow: '0 4px 16px rgba(14, 165, 233, 0.1)' }}>
             <div>
-              <div style={{ fontSize: '0.74rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ fontSize: '0.78rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
                 Your Private Anonymous Case Code
               </div>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.05em' }}>
+              <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#0284c7', letterSpacing: '0.05em' }}>
                 {generatedCase.caseCode}
               </div>
             </div>
 
             <button
               onClick={handleCopyCode}
-              className="btn-secondary"
-              style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              className="btn-primary"
+              style={{ padding: '12px 22px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.92rem' }}
               title="Copy Case Code"
             >
-              {copied ? <Check size={18} color="#34d399" /> : <Copy size={18} />}
-              {copied ? 'Copied' : 'Copy Code'}
+              {copied ? <Check size={18} color="#ffffff" /> : <Copy size={18} />}
+              {copied ? 'Copied to Clipboard!' : 'Copy Case Code'}
             </button>
           </div>
 
           {/* Forensic Triage Card with Safety Graph Nodes */}
-          <div style={{ background: 'rgba(8, 24, 48, 0.95)', border: '1px solid rgba(56, 189, 248, 0.35)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ background: '#ffffff', border: '1.5px solid rgba(14, 165, 233, 0.25)', borderRadius: '18px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 16px rgba(14, 116, 189, 0.06)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-              <h4 style={{ margin: 0, fontSize: '1rem', color: '#e0f2fe', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Network size={18} color="#38bdf8" /> AI Safety Graph & Case Triage
+              <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
+                <Network size={20} color="#0284c7" /> AI Safety Graph & Case Triage
               </h4>
-              <span style={{ fontSize: '0.74rem', padding: '3px 10px', borderRadius: '999px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid #38bdf8' }}>
+              <span className="badge-cyan" style={{ fontSize: '0.75rem', padding: '4px 12px' }}>
                 Gemini Multi-Model Triage Engine
               </span>
             </div>
 
             {/* Safety Graph 4-Pillars Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-              <div style={{ background: '#071529', padding: '12px', borderRadius: '10px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                <span style={{ fontSize: '0.72rem', color: '#93c5fd', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>
+              <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1.5px solid rgba(14, 116, 189, 0.15)' }}>
+                <span style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '4px', fontWeight: 700 }}>
                   1. CLUSTER (WHAT)
                 </span>
-                <strong style={{ fontSize: '0.88rem', color: '#f0f9ff' }}>
+                <strong style={{ fontSize: '0.95rem', color: '#0f172a', display: 'block' }}>
                   {generatedCase.triageData?.safety_graph_nodes?.cluster?.name || generatedCase.category}
                 </strong>
-                <div style={{ fontSize: '0.7rem', color: '#f87171', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.74rem', color: '#dc2626', marginTop: '3px', fontWeight: 700 }}>
                   Severity: {generatedCase.triageData?.safety_graph_nodes?.cluster?.severity || generatedCase.aiRiskLevel}
                 </div>
               </div>
 
-              <div style={{ background: '#071529', padding: '12px', borderRadius: '10px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                <span style={{ fontSize: '0.72rem', color: '#93c5fd', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>
+              <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1.5px solid rgba(14, 116, 189, 0.15)' }}>
+                <span style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '4px', fontWeight: 700 }}>
                   2. TACTIC (HOW)
                 </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
                   {(generatedCase.triageData?.safety_graph_nodes?.tactics || generatedCase.behavioralIndicators || []).slice(0, 3).map((t, idx) => (
-                    <span key={idx} style={{ fontSize: '0.68rem', padding: '2px 6px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.18)', color: '#fca5a5', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                    <span key={idx} style={{ fontSize: '0.72rem', padding: '3px 8px', borderRadius: '6px', background: 'rgba(220, 38, 38, 0.1)', color: '#b91c1c', border: '1px solid rgba(220, 38, 38, 0.25)', fontWeight: 600 }}>
                       {t}
                     </span>
                   ))}
                 </div>
               </div>
 
-              <div style={{ background: '#071529', padding: '12px', borderRadius: '10px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                <span style={{ fontSize: '0.72rem', color: '#93c5fd', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>
+              <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1.5px solid rgba(14, 116, 189, 0.15)' }}>
+                <span style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '4px', fontWeight: 700 }}>
                   3. CASE (WHICH)
                 </span>
-                <strong style={{ fontSize: '0.88rem', color: '#38bdf8' }}>
+                <strong style={{ fontSize: '0.95rem', color: '#0284c7', display: 'block' }}>
                   {generatedCase.caseCode}
                 </strong>
-                <div style={{ fontSize: '0.7rem', color: '#34d399', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.74rem', color: '#059669', marginTop: '3px', fontWeight: 700 }}>
                   Status: Under Review
                 </div>
               </div>
 
-              <div style={{ background: '#071529', padding: '12px', borderRadius: '10px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                <span style={{ fontSize: '0.72rem', color: '#93c5fd', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>
+              <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1.5px solid rgba(14, 116, 189, 0.15)' }}>
+                <span style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '4px', fontWeight: 700 }}>
                   4. PLATFORM (WHERE)
                 </span>
-                <strong style={{ fontSize: '0.88rem', color: '#f0f9ff' }}>
+                <strong style={{ fontSize: '0.95rem', color: '#0f172a', display: 'block' }}>
                   {generatedCase.triageData?.safety_graph_nodes?.platform?.name || platform}
                 </strong>
-                <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '3px' }}>
                   {generatedCase.triageData?.safety_graph_nodes?.platform?.sub_surface || platformSurface}
                 </div>
               </div>
             </div>
 
             {/* Jurisdiction & Welfare Organization */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', paddingTop: '10px', borderTop: '1px solid rgba(56, 189, 248, 0.15)', fontSize: '0.82rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', paddingTop: '12px', borderTop: '1px solid rgba(14, 116, 189, 0.15)', fontSize: '0.86rem' }}>
               <div>
-                <span style={{ color: '#94a3b8' }}>Assigned Responders: </span>
-                <strong style={{ color: '#34d399' }}>{generatedCase.assignedOrganization}</strong>
+                <span style={{ color: '#64748b' }}>Assigned Responders: </span>
+                <strong style={{ color: '#047857' }}>{generatedCase.assignedOrganization}</strong>
               </div>
               <div>
-                <span style={{ color: '#94a3b8' }}>Risk Assessment: </span>
-                <strong style={{ color: generatedCase.aiRiskScore >= 75 ? '#f87171' : '#38bdf8' }}>
+                <span style={{ color: '#64748b' }}>Risk Assessment: </span>
+                <strong style={{ color: generatedCase.aiRiskScore >= 75 ? '#dc2626' : '#0284c7' }}>
                   {generatedCase.aiRiskScore}% ({generatedCase.urgencyLevel})
                 </strong>
               </div>
@@ -1172,26 +1344,26 @@ export default function AnonymousReportWizard({ setActiveTab }) {
           {generatedCase.recommendedNgos && generatedCase.recommendedNgos.length > 0 && (
             <div 
               style={{ 
-                background: 'linear-gradient(135deg, rgba(8, 28, 56, 0.95) 0%, rgba(12, 38, 76, 0.95) 100%)',
-                border: '1.5px solid rgba(56, 189, 248, 0.45)',
-                borderRadius: '16px',
-                padding: '22px',
+                background: '#ffffff',
+                border: '1.5px solid rgba(14, 165, 233, 0.3)',
+                borderRadius: '18px',
+                padding: '24px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '16px',
-                boxShadow: '0 8px 30px rgba(56, 189, 248, 0.15)'
+                boxShadow: '0 4px 16px rgba(14, 116, 189, 0.06)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '1.05rem', color: '#e0f2fe', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
-                    <Building size={18} color="#38bdf8" /> Recommended NGOs & Child Support Services
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
+                    <Building size={18} color="#0284c7" /> Recommended NGOs & Child Support Services
                   </h4>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: '#93c5fd' }}>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: '#475569' }}>
                     Matched automatically as per your location ({city || 'Local Area'}, {state}) and reported issue
                   </p>
                 </div>
-                <span style={{ fontSize: '0.7rem', padding: '3px 10px', borderRadius: '999px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.4)', fontWeight: 700 }}>
+                <span className="badge-safe" style={{ fontSize: '0.72rem', padding: '3px 10px', fontWeight: 700 }}>
                   ✓ Official & DARPAN Listed
                 </span>
               </div>
@@ -1201,52 +1373,52 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                   <div
                     key={idx}
                     style={{
-                      background: 'rgba(6, 18, 38, 0.9)',
-                      border: '1px solid rgba(56, 189, 248, 0.25)',
-                      borderRadius: '12px',
-                      padding: '14px',
+                      background: '#f8fafc',
+                      border: '1.5px solid rgba(14, 116, 189, 0.18)',
+                      borderRadius: '14px',
+                      padding: '16px',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '8px',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                      <strong style={{ fontSize: '0.9rem', color: '#f0f9ff' }}>
+                      <strong style={{ fontSize: '0.94rem', color: '#0f172a' }}>
                         {ngo.organization_name}
                       </strong>
-                      <span style={{ fontSize: '0.66rem', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.12)', padding: '2px 6px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '0.68rem', color: '#0284c7', background: 'rgba(14, 165, 233, 0.12)', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, whiteSpace: 'nowrap' }}>
                         {ngo.organization_type}
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '0.76rem', color: '#94a3b8', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                      <MapPin size={14} color="#38bdf8" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <div style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                      <MapPin size={14} color="#0284c7" style={{ flexShrink: 0, marginTop: '2px' }} />
                       <span>{ngo.address || `${ngo.city}, ${ngo.state}`}</span>
                     </div>
 
-                    <div style={{ fontSize: '0.74rem', color: '#bae6fd', lineHeight: 1.35 }}>
+                    <div style={{ fontSize: '0.8rem', color: '#334155', lineHeight: 1.4 }}>
                       <strong>Services: </strong>{ngo.services}
                     </div>
 
-                    <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(14, 116, 189, 0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <a
                         href={`tel:${(ngo.phone || '').split('/')[0].trim()}`}
                         style={{
-                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                           color: '#fff',
-                          padding: '6px 14px',
+                          padding: '7px 16px',
                           borderRadius: '8px',
-                          fontSize: '0.76rem',
+                          fontSize: '0.8rem',
                           fontWeight: 700,
                           textDecoration: 'none',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          boxShadow: '0 0 12px rgba(16, 185, 129, 0.3)'
+                          boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)'
                         }}
                       >
-                        <PhoneCall size={13} /> {ngo.phone}
+                        <PhoneCall size={14} /> {ngo.phone}
                       </a>
 
                       {ngo.website && (
@@ -1255,8 +1427,9 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
-                            fontSize: '0.72rem',
-                            color: '#38bdf8',
+                            fontSize: '0.78rem',
+                            color: '#0284c7',
+                            fontWeight: 600,
                             textDecoration: 'underline'
                           }}
                         >
@@ -1274,32 +1447,32 @@ export default function AnonymousReportWizard({ setActiveTab }) {
           {generatedCase.applicableLaws && generatedCase.applicableLaws.length > 0 && (
             <div 
               style={{ 
-                background: 'linear-gradient(135deg, rgba(20, 16, 42, 0.95) 0%, rgba(30, 20, 60, 0.95) 100%)',
-                border: '1.5px solid rgba(168, 85, 247, 0.45)',
-                borderRadius: '16px',
-                padding: '22px',
+                background: '#ffffff',
+                border: '1.5px solid rgba(168, 85, 247, 0.35)',
+                borderRadius: '18px',
+                padding: '24px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '16px',
-                boxShadow: '0 8px 30px rgba(168, 85, 247, 0.15)'
+                boxShadow: '0 4px 16px rgba(168, 85, 247, 0.08)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '1.05rem', color: '#f3e8ff', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
-                    <Scale size={18} color="#c084fc" /> Applicable Legal Sections & Statutory Protections
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
+                    <Scale size={18} color="#7c3aed" /> Applicable Legal Sections & Statutory Protections
                   </h4>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: '#d8b4fe' }}>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: '#64748b' }}>
                     Identified automatically under Indian Law (POCSO Act, IT Act, BNS / IPC, Constitution) based on your report
                   </p>
                 </div>
-                <span style={{ fontSize: '0.7rem', padding: '3px 10px', borderRadius: '999px', background: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.4)', fontWeight: 700 }}>
+                <span className="badge-purple" style={{ fontSize: '0.72rem', padding: '3px 10px', fontWeight: 700 }}>
                   ⚖️ Indian Penal & Cyber Law
                 </span>
               </div>
 
               {/* Reassurance Banner */}
-              <div style={{ background: 'rgba(168, 85, 247, 0.12)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '10px', padding: '10px 14px', fontSize: '0.8rem', color: '#f3e8ff', lineHeight: 1.45 }}>
+              <div style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1.5px solid rgba(139, 92, 246, 0.25)', borderRadius: '12px', padding: '12px 16px', fontSize: '0.85rem', color: '#5b21b6', lineHeight: 1.5 }}>
                 🛡️ <strong>Statutory Victim Guarantee:</strong> You are the victim protected under these laws. The perpetrator is criminally liable. You cannot be penalized for reporting or preserving evidence.
               </div>
 
@@ -1308,9 +1481,9 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                   <div 
                     key={idx}
                     style={{
-                      background: 'rgba(10, 8, 26, 0.9)',
-                      border: '1px solid rgba(168, 85, 247, 0.3)',
-                      borderRadius: '12px',
+                      background: '#f8fafc',
+                      border: '1.5px solid rgba(168, 85, 247, 0.25)',
+                      borderRadius: '14px',
                       padding: '16px',
                       display: 'flex',
                       flexDirection: 'column',
@@ -1319,21 +1492,21 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', flexWrap: 'wrap' }}>
                       <div>
-                        <span style={{ fontSize: '0.72rem', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>
+                        <span style={{ fontSize: '0.74rem', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 800 }}>
                           {law.act}
                         </span>
-                        <h5 style={{ margin: '2px 0 0 0', fontSize: '0.98rem', color: '#f8fafc', fontWeight: 800 }}>
+                        <h5 style={{ margin: '2px 0 0 0', fontSize: '1.02rem', color: '#0f172a', fontWeight: 800 }}>
                           {law.section}: {law.title}
                         </h5>
                       </div>
                       <span 
                         style={{ 
-                          fontSize: '0.68rem', 
-                          padding: '3px 8px', 
+                          fontSize: '0.72rem', 
+                          padding: '3px 10px', 
                           borderRadius: '6px', 
-                          background: law.nature_of_offence?.includes('Non-Bailable') ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.15)',
-                          color: law.nature_of_offence?.includes('Non-Bailable') ? '#f87171' : '#38bdf8',
-                          border: law.nature_of_offence?.includes('Non-Bailable') ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(56, 189, 248, 0.3)',
+                          background: law.nature_of_offence?.includes('Non-Bailable') ? 'rgba(220, 38, 38, 0.12)' : 'rgba(14, 165, 233, 0.12)',
+                          color: law.nature_of_offence?.includes('Non-Bailable') ? '#b91c1c' : '#0284c7',
+                          border: law.nature_of_offence?.includes('Non-Bailable') ? '1px solid rgba(220, 38, 38, 0.3)' : '1px solid rgba(14, 165, 233, 0.3)',
                           fontWeight: 700
                         }}
                       >
@@ -1341,15 +1514,15 @@ export default function AnonymousReportWizard({ setActiveTab }) {
                       </span>
                     </div>
 
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#334155', lineHeight: 1.5 }}>
                       {law.description}
                     </p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', fontSize: '0.75rem' }}>
-                      <div style={{ color: '#fca5a5' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px', marginTop: '4px', paddingTop: '10px', borderTop: '1px solid rgba(0, 0, 0, 0.06)', fontSize: '0.8rem' }}>
+                      <div style={{ color: '#b91c1c' }}>
                         <strong>Statutory Penalty: </strong>{law.penalty}
                       </div>
-                      <div style={{ color: '#a7f3d0' }}>
+                      <div style={{ color: '#047857' }}>
                         <strong>Your Protection: </strong>{law.child_rights_protection}
                       </div>
                     </div>
@@ -1359,17 +1532,17 @@ export default function AnonymousReportWizard({ setActiveTab }) {
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap', marginTop: '10px' }}>
             <button
               className="btn-primary"
-              style={{ padding: '12px 24px', fontSize: '0.88rem' }}
+              style={{ padding: '14px 28px', fontSize: '0.92rem' }}
               onClick={() => setActiveTab('tracker')}
             >
               🔍 Track Status in Report Tracker
             </button>
             <button
               className="btn-secondary"
-              style={{ padding: '12px 20px', fontSize: '0.88rem' }}
+              style={{ padding: '14px 24px', fontSize: '0.92rem' }}
               onClick={() => {
                 setCurrentStep(1);
                 setSelectedTactics([]);

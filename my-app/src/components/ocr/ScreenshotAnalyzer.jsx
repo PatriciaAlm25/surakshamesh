@@ -97,11 +97,12 @@ export default function ScreenshotAnalyzer({ setActiveTab }) {
               style={{
                 padding: '10px 8px',
                 borderRadius: '8px',
-                background: selectedPreset === 'insta_dm' && !customFilePreview ? 'rgba(56, 189, 248, 0.2)' : 'rgba(15, 23, 42, 0.7)',
-                border: selectedPreset === 'insta_dm' && !customFilePreview ? '1px solid #38bdf8' : '1px solid var(--border-subtle)',
-                color: selectedPreset === 'insta_dm' && !customFilePreview ? '#38bdf8' : 'var(--text-secondary)',
+                background: selectedPreset === 'insta_dm' && !customFilePreview ? '#e0f2fe' : '#ffffff',
+                border: selectedPreset === 'insta_dm' && !customFilePreview ? '1.5px solid #0284c7' : '1px solid var(--border-subtle)',
+                color: selectedPreset === 'insta_dm' && !customFilePreview ? '#0369a1' : 'var(--text-secondary)',
                 fontSize: '0.78rem',
-                fontWeight: 600
+                fontWeight: 700,
+                cursor: 'pointer'
               }}
             >
               📱 Instagram DM
@@ -112,11 +113,12 @@ export default function ScreenshotAnalyzer({ setActiveTab }) {
               style={{
                 padding: '10px 8px',
                 borderRadius: '8px',
-                background: selectedPreset === 'indic_hinglish' && !customFilePreview ? 'rgba(168, 85, 247, 0.2)' : 'rgba(15, 23, 42, 0.7)',
-                border: selectedPreset === 'indic_hinglish' && !customFilePreview ? '1px solid #c084fc' : '1px solid var(--border-subtle)',
-                color: selectedPreset === 'indic_hinglish' && !customFilePreview ? '#c084fc' : 'var(--text-secondary)',
+                background: selectedPreset === 'indic_hinglish' && !customFilePreview ? '#f3e8ff' : '#ffffff',
+                border: selectedPreset === 'indic_hinglish' && !customFilePreview ? '1.5px solid #a855f7' : '1px solid var(--border-subtle)',
+                color: selectedPreset === 'indic_hinglish' && !customFilePreview ? '#7e22ce' : 'var(--text-secondary)',
                 fontSize: '0.78rem',
-                fontWeight: 600
+                fontWeight: 700,
+                cursor: 'pointer'
               }}
             >
               🇮🇳 WhatsApp Hinglish
@@ -127,11 +129,12 @@ export default function ScreenshotAnalyzer({ setActiveTab }) {
               style={{
                 padding: '10px 8px',
                 borderRadius: '8px',
-                background: selectedPreset === 'youtube_hate' && !customFilePreview ? 'rgba(239, 68, 68, 0.2)' : 'rgba(15, 23, 42, 0.7)',
-                border: selectedPreset === 'youtube_hate' && !customFilePreview ? '1px solid #ef4444' : '1px solid var(--border-subtle)',
-                color: selectedPreset === 'youtube_hate' && !customFilePreview ? '#f87171' : 'var(--text-secondary)',
+                background: selectedPreset === 'youtube_hate' && !customFilePreview ? '#fee2e2' : '#ffffff',
+                border: selectedPreset === 'youtube_hate' && !customFilePreview ? '1.5px solid #ef4444' : '1px solid var(--border-subtle)',
+                color: selectedPreset === 'youtube_hate' && !customFilePreview ? '#b91c1c' : 'var(--text-secondary)',
                 fontSize: '0.78rem',
-                fontWeight: 600
+                fontWeight: 700,
+                cursor: 'pointer'
               }}
             >
               💬 Video Comments
@@ -139,20 +142,20 @@ export default function ScreenshotAnalyzer({ setActiveTab }) {
           </div>
 
           {/* Upload Custom Box */}
-          <div style={{ position: 'relative', border: '2px dashed var(--border-medium)', borderRadius: '12px', padding: '16px', textAlign: 'center', background: 'rgba(10, 18, 36, 0.6)' }}>
+          <div style={{ position: 'relative', border: '2px dashed #93c5fd', borderRadius: '12px', padding: '16px', textAlign: 'center', background: '#f0f9ff' }}>
             <input 
               type="file" 
               accept="image/*" 
               onChange={handleCustomFileUpload} 
               style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} 
             />
-            <Upload size={22} color="#38bdf8" style={{ marginBottom: '6px' }} />
-            <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>Click or Drag screenshot file here</div>
+            <Upload size={22} color="#0284c7" style={{ marginBottom: '6px' }} />
+            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>Click or Drag screenshot file here</div>
             <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>PNG, JPG up to 10MB • Zero server retention</div>
           </div>
 
           {/* Screenshot Preview with OCR Laser Scan Line */}
-          <div style={{ position: 'relative', background: '#050811', borderRadius: '12px', overflow: 'hidden', minHeight: '260px', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', background: '#f8fafc', borderRadius: '12px', overflow: 'hidden', minHeight: '260px', border: '1.5px solid rgba(14, 116, 189, 0.2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             
             {isScanning && <div className="ocr-scanner-line" />}
 
@@ -160,13 +163,13 @@ export default function ScreenshotAnalyzer({ setActiveTab }) {
               <img src={customFilePreview} alt="Custom upload" style={{ width: '100%', maxHeight: '320px', objectFit: 'contain' }} />
             ) : (
               <div style={{ padding: '24px', width: '100%', maxWidth: '340px' }}>
-                <div style={{ background: '#0f172a', borderRadius: '14px', padding: '14px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px', marginBottom: '10px' }}>
+                <div style={{ background: '#ffffff', borderRadius: '14px', padding: '14px', border: '1.5px solid rgba(14, 116, 189, 0.2)', boxShadow: '0 4px 16px rgba(14, 116, 189, 0.08)' }}>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#0284c7', borderBottom: '1px solid rgba(14, 116, 189, 0.12)', paddingBottom: '6px', marginBottom: '10px' }}>
                     {scanResult.title}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {scanResult.detectedText.map((txt, i) => (
-                      <div key={i} style={{ background: 'rgba(30, 41, 59, 0.7)', padding: '8px 10px', borderRadius: '8px', fontSize: '0.78rem', borderLeft: '2px solid #38bdf8' }}>
+                      <div key={i} style={{ background: '#f0f9ff', color: '#0f172a', padding: '8px 10px', borderRadius: '8px', fontSize: '0.8rem', borderLeft: '3px solid #0284c7' }}>
                         {txt}
                       </div>
                     ))}
@@ -175,7 +178,7 @@ export default function ScreenshotAnalyzer({ setActiveTab }) {
               </div>
             )}
 
-            <div style={{ position: 'absolute', bottom: '8px', right: '12px', background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.68rem', color: '#94a3b8' }}>
+            <div style={{ position: 'absolute', bottom: '8px', right: '12px', background: 'rgba(15, 23, 42, 0.85)', padding: '3px 10px', borderRadius: '6px', fontSize: '0.68rem', color: '#ffffff', fontWeight: 600 }}>
               Optical Character Recognition: Active
             </div>
           </div>
@@ -189,7 +192,7 @@ export default function ScreenshotAnalyzer({ setActiveTab }) {
           <div className="glass-panel" style={{ padding: '22px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <h3 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText size={18} color="#a855f7" /> Extracted Text Transcript
+                <FileText size={18} color="#7c3aed" /> Extracted Text Transcript
               </h3>
               <div style={{ display: 'flex', gap: '6px' }}>
                 <span className="badge-cyan" style={{ fontSize: '0.7rem' }}>
@@ -201,10 +204,10 @@ export default function ScreenshotAnalyzer({ setActiveTab }) {
               </div>
             </div>
 
-            <div style={{ background: '#090e1a', borderRadius: '10px', padding: '14px', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
+            <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '14px', border: '1.5px solid rgba(14, 116, 189, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
               {scanResult.detectedText.map((line, i) => (
                 <div key={i} style={{ fontSize: '0.84rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                  <span style={{ color: '#38bdf8', fontWeight: 700 }}>0{i + 1}</span>
+                  <span style={{ color: '#0284c7', fontWeight: 700 }}>0{i + 1}</span>
                   <span>{line}</span>
                 </div>
               ))}
@@ -219,10 +222,10 @@ export default function ScreenshotAnalyzer({ setActiveTab }) {
           <div className="glass-panel-danger" style={{ padding: '22px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
               <div>
-                <span style={{ fontSize: '0.75rem', color: '#f87171', textTransform: 'uppercase', fontWeight: 700 }}>
+                <span style={{ fontSize: '0.75rem', color: '#dc2626', textTransform: 'uppercase', fontWeight: 700 }}>
                   Diagnostic Classification
                 </span>
-                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#f87171', marginTop: '2px' }}>
+                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#dc2626', marginTop: '2px' }}>
                   {scanResult.riskResult.score}% RISK SCORE
                 </div>
               </div>
@@ -232,11 +235,11 @@ export default function ScreenshotAnalyzer({ setActiveTab }) {
             </div>
 
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-              Primary Concern: <strong style={{ color: '#f8fafc' }}>{scanResult.riskResult.category.replace('_', ' ')}</strong>
+              Primary Concern: <strong style={{ color: 'var(--text-primary)' }}>{scanResult.riskResult.category.replace('_', ' ')}</strong>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Detected Forensic Flags:</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>Detected Forensic Flags:</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {scanResult.riskResult.flags.map((flg, i) => (
                   <span key={i} className="badge-danger" style={{ fontSize: '0.75rem' }}>
@@ -247,8 +250,8 @@ export default function ScreenshotAnalyzer({ setActiveTab }) {
             </div>
 
             {/* Recommendation & Direct SOS */}
-            <div style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '12px 14px', borderRadius: '10px', marginBottom: '16px' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#38bdf8', marginBottom: '4px' }}>
+            <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '10px', border: '1.5px solid rgba(239, 68, 68, 0.25)', marginBottom: '16px', boxShadow: '0 2px 8px rgba(239, 68, 68, 0.06)' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0369a1', marginBottom: '4px' }}>
                 🛡️ Recommended Safety Action:
               </div>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
