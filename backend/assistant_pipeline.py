@@ -235,7 +235,16 @@ class GeminiContextEngine:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=self.api_key)
-                model = genai.GenerativeModel("gemini-flash-latest")
+
+                # Resilient Multi-Model Failover List across active Google AI models
+                candidate_models = [
+                    "gemini-3.7-flash",
+                    "gemini-3.5-flash",
+                    "gemini-flash-lite-latest",
+                    "gemini-3.1-flash-lite",
+                    "gemini-3.5-flash-lite",
+                    "gemini-flash-latest"
+                ]
 
                 system_prompt = f"""
 You are the Suraksha Assistant, an empathetic child online safety companion in India.
@@ -247,9 +256,9 @@ MANDATORY SAFETY RULES:
 1. ALWAYS reassure the child that this is NOT their fault and they are NOT in trouble.
 2. NEVER blame the child. Never act as a judge or scold them.
 3. DO NOT pretend to be a police officer or clinical psychologist.
-4. Give clear, calm, practical steps: Stop replying, take screenshots for evidence, block the sender, and speak with a trusted adult.
+4. Give clear, calm, practical steps tailored uniquely to their exact words: Stop replying, take screenshots for evidence, block the sender, and speak with a trusted adult.
 5. Emphasize that help is available 24/7 at Childline 1098 (Toll-free in India).
-6. RESPOND ENTIRELY IN {language_name}. Keep the language gentle, simple, and supportive for a young person.
+6. RESPOND ENTIRELY IN {language_name}. Keep the language gentle, simple, warm, and supportive for a young person.
 
 Child's message: "{child_message}"
 
@@ -260,28 +269,34 @@ Format your answer as a JSON object:
   "localized_advice": "Your complete comforting, protective advice written in {language_name}"
 }}
 """
-                response = model.generate_content(system_prompt)
-                text = response.text.strip()
-                # Parse JSON if possible
-                json_match = re.search(r'\{.*\}', text, re.DOTALL)
-                if json_match:
-                    parsed = json.loads(json_match.group(0))
-                    return {
-                        "situation": parsed.get("situation_summary", "Child experiencing uncomfortable online interaction"),
-                        "emotional_state": parsed.get("emotional_state", "Concerned"),
-                        "advice": parsed.get("localized_advice", text),
-                        "model_used": "Gemini 1.5 Flash (Cloud)"
-                    }
-                return {
-                    "situation": "Online boundary concern",
-                    "emotional_state": "Pressured",
-                    "advice": text,
-                    "model_used": "Gemini 1.5 Flash (Cloud)"
-                }
+                for model_name in candidate_models:
+                    try:
+                        model = genai.GenerativeModel(model_name)
+                        response = model.generate_content(system_prompt)
+                        text = response.text.strip()
+                        # Parse JSON if possible
+                        json_match = re.search(r'\{.*\}', text, re.DOTALL)
+                        if json_match:
+                            parsed = json.loads(json_match.group(0))
+                            return {
+                                "situation": parsed.get("situation_summary", "Child experiencing uncomfortable online interaction"),
+                                "emotional_state": parsed.get("emotional_state", "Concerned"),
+                                "advice": parsed.get("localized_advice", text),
+                                "model_used": f"{model_name} (Cloud AI)"
+                            }
+                        return {
+                            "situation": "Online boundary concern",
+                            "emotional_state": "Pressured",
+                            "advice": text,
+                            "model_used": f"{model_name} (Cloud AI)"
+                        }
+                    except Exception as model_err:
+                        print(f"[Gemini Model {model_name} Error] {model_err}")
+                        continue
             except Exception as e:
-                print(f"[Gemini API Error] {e}")
+                print(f"[Gemini Context Engine Error] {e}")
 
-        # High-Fidelity Heuristic Fallback
+        # Dynamic Heuristic Fallback
         return self._generate_heuristic_safe_advice(child_message, language_name, risk_data)
 
     def _generate_heuristic_safe_advice(self, msg: str, lang: str, risk: Dict[str, Any]) -> Dict[str, Any]:
