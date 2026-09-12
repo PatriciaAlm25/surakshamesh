@@ -172,8 +172,10 @@ export const StorageService = {
 
   saveCase(newCase) {
     const cases = this.getCases();
+    const randomCode = `SM-2026-${Math.floor(10000 + Math.random() * 90000)}`;
     const fullCase = {
       id: `case-${Date.now()}`,
+      caseCode: newCase.caseCode || randomCode,
       createdAt: new Date().toISOString(),
       timeline: [
         {
@@ -184,7 +186,7 @@ export const StorageService = {
         },
         {
           status: 'AI_ANALYZED',
-          title: `AI Pattern Analysis (${newCase.riskScore || 75}% Risk)`,
+          title: `AI Pattern Analysis (${newCase.aiRiskScore || newCase.riskScore || 75}% Risk)`,
           time: 'Just now',
           actor: 'AI Grooming Radar Engine'
         }
@@ -194,6 +196,23 @@ export const StorageService = {
     };
     cases.unshift(fullCase);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cases));
+
+    // Also attempt saving to Supabase anonymous_cases if available
+    try {
+      supabase.from('anonymous_cases').insert([{
+        case_code: fullCase.caseCode,
+        category: fullCase.category || 'OTHER_CONCERN',
+        child_age_bracket: fullCase.childAgeBracket || 'UNDER_14',
+        raw_description: fullCase.rawDescription || '',
+        ai_risk_score: fullCase.aiRiskScore || 75,
+        ai_risk_level: fullCase.aiRiskLevel || 'HIGH',
+        ai_summary: fullCase.aiSummary || 'Automated triage report',
+        behavioral_indicators: fullCase.behavioralIndicators || []
+      }]).then(() => {}).catch(() => {});
+    } catch (e) {
+      // Offline fallback
+    }
+
     return fullCase;
   },
 
@@ -212,5 +231,86 @@ export const StorageService = {
       return target;
     }
     return null;
+  },
+
+  // ----------------- ASSISTANT CHAT LOGGING IN SUPABASE -----------------
+  getChatLogs(sessionId = 'default-session') {
+    try {
+      const stored = localStorage.getItem(`suraksha_chat_logs_${sessionId}`);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {
+      console.warn('Chat log retrieval error:', e);
+    }
+    return [];
+  },
+
+  saveChatMessage(messageData, sessionId = 'default-session') {
+    const logs = this.getChatLogs(sessionId);
+    const msg = {
+      id: `chat-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      sessionId,
+      timestamp: new Date().toISOString(),
+      ...messageData
+    };
+    logs.push(msg);
+    localStorage.setItem(`suraksha_chat_logs_${sessionId}`, JSON.stringify(logs));
+
+    // Also attempt saving to Supabase assistant_chat_messages
+    try {
+      supabase.from('assistant_chat_messages').insert([{
+        session_id: sessionId,
+        sender: messageData.sender,
+        message_text: messageData.text,
+        language_code: messageData.languageCode || 'hi-IN',
+        situation_assessment: messageData.situation || null,
+        risk_score: messageData.riskScore || null,
+        risk_level: messageData.riskLevel || null,
+        behavioral_indicators: messageData.indicators || [],
+        prompted_for_report: Boolean(messageData.promptedForReport),
+        user_confirmed_report: Boolean(messageData.userConfirmedReport)
+      }]).then(() => {}).catch(() => {});
+    } catch (e) {
+      // Graceful offline fallback
+    }
+
+    return msg;
+  },
+
+  registerCaseFromChat({ chatHistory, riskData, languageCode, childAge = 'UNDER_14' }) {
+    // Extract testimony from chat
+    const userTexts = chatHistory
+      .filter(m => m.sender === 'user')
+      .map(m => m.text)
+      .join(' | ');
+
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    const caseCode = `SM-2026-${randomNum}`;
+
+    let category = 'ONLINE_GROOMING';
+    if (riskData.indicators?.some(i => i.includes('Extortion') || i.includes('Blackmail') || i.includes('Bully'))) {
+      category = 'CYBERBULLYING';
+    } else if (riskData.indicators?.some(i => i.includes('Phishing'))) {
+      category = 'MALICIOUS_PHISHING';
+    }
+
+    const newCase = this.saveCase({
+      caseCode,
+      category,
+      childAgeBracket: childAge,
+      language: languageCode || 'hi-IN',
+      platform: 'Suraksha Assistant Direct Intake',
+      rawDescription: userTexts || 'Child reported high-priority distress via Suraksha AI Assistant.',
+      aiRiskScore: riskData.riskScore || 85,
+      aiRiskLevel: riskData.riskLevel || 'HIGH',
+      urgencyLevel: 'P1 - Immediate Intervention (High Priority)',
+      aiSummary: `High-priority case registered via Suraksha Voice Assistant. Context: ${riskData.situation || 'Child distress'}. Flags: ${riskData.indicators?.join(', ')}.`,
+      behavioralIndicators: riskData.indicators || ['High Priority Distress'],
+      evidenceSnippets: chatHistory.slice(-3).map(m => `${m.sender}: ${m.text.slice(0, 80)}`),
+      recommendedAction: 'Immediate outreach by verified child counselor; preserve chat context for safety protocol.',
+      assignedOrganization: 'Pratham Child Welfare Foundation & Cyber Cell Unit',
+      regionZone: 'Western Zone / Mumbai Metro'
+    });
+
+    return newCase;
   }
 };
