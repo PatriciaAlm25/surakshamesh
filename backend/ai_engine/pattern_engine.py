@@ -95,7 +95,11 @@ PATTERNS = {
             r"\bmessage me on telegram\b",
             r"\bprivate chat\b",
             r"\bprivate message\b",
-            r"\bdm me\b"
+            r"\bdm me\b",
+            r"\btalk somewhere private\b",
+            r"\bmove somewhere private\b",
+            r"\bchat privately\b",
+            r"\bcontinue somewhere private\b"
         ],
         "weight": 20
     },

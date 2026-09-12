@@ -49,6 +49,15 @@ export default function Navbar({ activeTab, setActiveTab, userAge, setUserAge })
             </li>
             <li>
               <button
+                className={`nav-item-btn ${activeTab === 'safety' ? 'active' : ''}`}
+                onClick={() => setActiveTab('safety')}
+              >
+                <Shield size={15} color="#10b981" />
+                Conversation Safety
+              </button>
+            </li>
+            <li>
+              <button
                 className={`nav-item-btn ${activeTab === 'ocr' ? 'active' : ''}`}
                 onClick={() => setActiveTab('ocr')}
               >

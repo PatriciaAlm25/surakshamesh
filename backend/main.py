@@ -252,10 +252,13 @@ def read_root():
         "modules": ["Grooming Radar", "Multilingual NLP", "AI Case Translator", "SafeSchool Heatmap"]
     }
 
-@app.post("/api/analyze-conversation", response_model=ConversationAnalysisResponse)
-def analyze_conversation(req: ConversationAnalysisRequest):
-    res = analyze_conversation_flow(req.messages, req.child_age)
-    return res
+class SimpleConversationRequest(BaseModel):
+    messages: List[str]
+
+@app.post("/api/analyze-conversation")
+def analyze_conversation(req: SimpleConversationRequest):
+    from ai_engine.conversation_risk import calculate_conversation_risk
+    return calculate_conversation_risk(req.messages)
 
 @app.post("/api/translate-case", response_model=CaseTranslatorResponse)
 def translate_case(req: CaseSubmissionRequest):
