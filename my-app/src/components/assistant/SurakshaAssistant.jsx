@@ -21,13 +21,9 @@ import {
   VoiceAssistantService, 
   SUPPORTED_LANGUAGES 
 } from '../../services/voiceAssistantService';
-import { StorageService } from '../../services/storageService';
-import confetti from 'canvas-confetti';
 
 export default function SurakshaAssistant({ setActiveTab }) {
   const [selectedLanguage, setSelectedLanguage] = useState('hi-IN');
-  const [chatSessionId] = useState(() => `SESH-2026-${Math.floor(10000 + Math.random() * 90000)}`);
-  const [registeredCases, setRegisteredCases] = useState({});
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -119,21 +115,15 @@ export default function SurakshaAssistant({ setActiveTab }) {
         sender: 'user',
         text: `🎙️ [Voice message in ${langObj.name}]`,
         timestamp: 'Just now',
-        isAudioInput: true,
-        languageCode: selectedLanguage
+        isAudioInput: true
       };
       setMessages(prev => [...prev, userAudioMsg]);
-
-      // Save user message to Supabase chat logs
-      StorageService.saveChatMessage(userAudioMsg, chatSessionId);
 
       // Call multimodal pipeline
       const result = await VoiceAssistantService.processAssistantQuery({
         audioBlob,
         languageCode: selectedLanguage
       });
-
-      const isHighPriority = result.risk_level === 'HIGH' || result.risk_level === 'CRITICAL' || (result.risk_score && result.risk_score >= 55);
 
       const botReply = {
         id: `bot-${Date.now()}`,
@@ -146,16 +136,11 @@ export default function SurakshaAssistant({ setActiveTab }) {
         riskLevel: result.risk_level,
         riskScore: result.risk_score,
         indicators: result.detected_indicators,
-        pipelineTrace: result.pipeline_trace,
-        promptedForReport: isHighPriority,
-        isHighPriority: isHighPriority
+        pipelineTrace: result.pipeline_trace
       };
 
       setMessages(prev => [...prev, botReply]);
       setIsTyping(false);
-
-      // Save bot reply to Supabase chat logs
-      StorageService.saveChatMessage(botReply, chatSessionId);
 
       if (autoPlayAudio) {
         handlePlayAudio(botReply);
@@ -178,39 +163,17 @@ export default function SurakshaAssistant({ setActiveTab }) {
       id: `user-${Date.now()}`,
       sender: 'user',
       text: query,
-      timestamp: 'Just now',
-      languageCode: selectedLanguage
+      timestamp: 'Just now'
     };
 
     setMessages(prev => [...prev, userMsg]);
     setIsTyping(true);
-
-    // Save user message to Supabase chat logs
-    StorageService.saveChatMessage(userMsg, chatSessionId);
-
-    // Check if the user is answering "yes" or requesting report for previous concern
-    const lowerQuery = query.toLowerCase();
-    const isAffirmative = /^(yes|yeah|yup|yep|sure|please|haan|ha|haa|report|register|kar do|kar dijiye|ho|hoy|aam|aama|avunu|sari|theek hai|bilkul|ok|okay)/i.test(lowerQuery);
-    
-    // Find if last bot message had high priority and not yet reported
-    const lastBotMsg = [...messages].reverse().find(m => m.sender === 'bot');
-    const wasPrompted = lastBotMsg?.isHighPriority && !registeredCases[lastBotMsg.id];
-
-    if (isAffirmative && wasPrompted) {
-      setTimeout(() => {
-        handleConfirmReport(lastBotMsg);
-        setIsTyping(false);
-      }, 500);
-      return;
-    }
 
     try {
       const result = await VoiceAssistantService.processAssistantQuery({
         text: query,
         languageCode: selectedLanguage
       });
-
-      const isHighPriority = result.risk_level === 'HIGH' || result.risk_level === 'CRITICAL' || (result.risk_score && result.risk_score >= 55);
 
       const botReply = {
         id: `bot-${Date.now()}`,
@@ -223,16 +186,11 @@ export default function SurakshaAssistant({ setActiveTab }) {
         riskLevel: result.risk_level,
         riskScore: result.risk_score,
         indicators: result.detected_indicators,
-        pipelineTrace: result.pipeline_trace,
-        promptedForReport: isHighPriority,
-        isHighPriority: isHighPriority
+        pipelineTrace: result.pipeline_trace
       };
 
       setMessages(prev => [...prev, botReply]);
       setIsTyping(false);
-
-      // Save bot reply to Supabase chat logs
-      StorageService.saveChatMessage(botReply, chatSessionId);
 
       if (autoPlayAudio) {
         handlePlayAudio(botReply);
@@ -241,46 +199,6 @@ export default function SurakshaAssistant({ setActiveTab }) {
       console.error(e);
       setIsTyping(false);
     }
-  };
-
-  // User confirms registering the high priority case
-  const handleConfirmReport = (targetBotMsg) => {
-    // Register official anonymous case
-    const createdCase = StorageService.registerCaseFromChat({
-      chatHistory: messages,
-      riskData: {
-        riskScore: targetBotMsg.riskScore || 85,
-        riskLevel: targetBotMsg.riskLevel || 'HIGH',
-        situation: targetBotMsg.situation,
-        indicators: targetBotMsg.indicators
-      },
-      languageCode: selectedLanguage
-    });
-
-    setRegisteredCases(prev => ({
-      ...prev,
-      [targetBotMsg.id]: createdCase
-    }));
-
-    // Confetti effect
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
-
-    // Confirmation message from assistant
-    const confirmationMsg = {
-      id: `bot-registered-${Date.now()}`,
-      sender: 'bot',
-      text: `✅ **सुरक्षा रिपोर्ट सफलतापूर्वक दर्ज हो गई है! (Report Successfully Registered)**\n\nआपका गोपनीय केस नंबर है: **${createdCase.caseCode}**\n\nइस मामले को प्राथमिकता के आधार पर चाइल्डलाइन एवं बाल कल्याण यूनिट को सौंप दिया गया है। आप किसी भी समय **Report Tracker** में इस केस आईडी से स्थिति देख सकते हैं। आप बिल्कुल सुरक्षित हैं।`,
-      timestamp: 'Just now',
-      languageCode: selectedLanguage,
-      registeredCaseCode: createdCase.caseCode
-    };
-
-    setMessages(prev => [...prev, confirmationMsg]);
-    StorageService.saveChatMessage(confirmationMsg, chatSessionId);
   };
 
   // Play Audio for a message
@@ -570,91 +488,15 @@ export default function SurakshaAssistant({ setActiveTab }) {
                     </div>
                   </div>
 
-                  {/* Interactive High-Priority Report Prompt */}
-                  {isBot && msg.isHighPriority && (
-                    <div style={{ marginTop: '4px' }}>
-                      {!registeredCases[msg.id] ? (
-                        <div 
-                          style={{ 
-                            background: 'linear-gradient(135deg, rgba(30, 15, 20, 0.95) 0%, rgba(45, 18, 25, 0.9) 100%)',
-                            border: '1px solid rgba(239, 68, 68, 0.5)',
-                            borderRadius: '14px',
-                            padding: '12px 16px',
-                            boxShadow: '0 4px 20px rgba(239, 68, 68, 0.2)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '8px'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171', fontSize: '0.84rem', fontWeight: 700 }}>
-                            <AlertTriangle size={16} color="#ef4444" />
-                            <span>High Priority Concern Detected ({msg.riskScore || 85}% Risk)</span>
-                          </div>
-                          
-                          <p style={{ fontSize: '0.78rem', color: '#fca5a5', margin: 0, lineHeight: 1.4 }}>
-                            AI Assistant recommendation: Should I officially register and report this case anonymously so verified child welfare advocates can assist you?
-                          </p>
-
-                          <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                            <button
-                              className="btn-danger"
-                              style={{ padding: '6px 14px', fontSize: '0.76rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}
-                              onClick={() => handleConfirmReport(msg)}
-                            >
-                              <CheckCircle2 size={14} /> Yes, Report & Register Case
-                            </button>
-                            <button
-                              className="btn-secondary"
-                              style={{ padding: '6px 12px', fontSize: '0.76rem', borderRadius: '8px' }}
-                              onClick={() => setActiveTab('tracker')}
-                            >
-                              Check Existing Case
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div 
-                          style={{ 
-                            background: 'rgba(16, 185, 129, 0.12)',
-                            border: '1px solid rgba(16, 185, 129, 0.4)',
-                            borderRadius: '12px',
-                            padding: '10px 14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '10px'
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontSize: '0.72rem', color: '#34d399', fontWeight: 700 }}>
-                              ✓ CASE REGISTERED IN SUPABASE
-                            </div>
-                            <div style={{ fontSize: '0.9rem', color: '#f8fafc', fontWeight: 800 }}>
-                              {registeredCases[msg.id].caseCode}
-                            </div>
-                          </div>
-
-                          <button
-                            className="btn-primary"
-                            style={{ padding: '6px 12px', fontSize: '0.74rem', borderRadius: '8px' }}
-                            onClick={() => setActiveTab('tracker')}
-                          >
-                            🔍 Track Case Status
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Registered Case Code direct button */}
-                  {isBot && msg.registeredCaseCode && (
-                    <div style={{ marginTop: '4px' }}>
+                  {/* High Risk SOS Trigger */}
+                  {isBot && msg.riskLevel === 'HIGH' && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
                       <button
-                        className="btn-primary"
-                        style={{ padding: '8px 16px', fontSize: '0.78rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                        onClick={() => setActiveTab('tracker')}
+                        className="btn-danger"
+                        style={{ padding: '6px 14px', fontSize: '0.75rem', borderRadius: '8px' }}
+                        onClick={() => setActiveTab('report')}
                       >
-                        🔍 Open Case {msg.registeredCaseCode} in Report Tracker <ArrowRight size={14} />
+                        🚨 File 100% Anonymous SOS Report
                       </button>
                     </div>
                   )}
