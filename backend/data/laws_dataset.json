@@ -1,0 +1,184 @@
+[
+  {
+    "id": "POCSO_SEC_11_12",
+    "act": "Protection of Children from Sexual Offences (POCSO) Act, 2012",
+    "section": "Section 11 & Section 12",
+    "title": "Sexual Harassment of a Child (Online & Offline Grooming)",
+    "categories": [
+      "Online Grooming",
+      "Private Photo / Video Pressure",
+      "Sexual Abuse / Exploitation",
+      "Sexual Abuse",
+      "Emotional / Verbal Abuse"
+    ],
+    "tactics": [
+      "Private photo/video request",
+      "Someone asked me to keep it secret",
+      "Manipulation / emotional pressure",
+      "Sent inappropriate content",
+      "Asked me to meet them"
+    ],
+    "description": "Criminalizes making sexually explicit remarks, gestures, enticing a child online or offline, soliciting sexual conduct, or demanding private images.",
+    "nature_of_offence": "Cognizable & Non-Bailable",
+    "penalty": "Rigorous imprisonment up to 3 years and fine",
+    "child_rights_protection": "Mandatory in-camera trial in a child-friendly Special POCSO Court; child's identity must not be revealed in any media.",
+    "statutory_reassurance": "The child is strictly protected as the victim. The adult/contact making such requests is criminally liable."
+  },
+  {
+    "id": "IT_ACT_SEC_67B",
+    "act": "Information Technology Act, 2000 (Amended 2008)",
+    "section": "Section 67B",
+    "title": "Child Online Sexual Exploitation & Non-Consensual Media",
+    "categories": [
+      "Online Grooming",
+      "Private Photo / Video Pressure",
+      "Blackmail / Extortion",
+      "Sexual Abuse / Exploitation"
+    ],
+    "tactics": [
+      "Private photo/video request",
+      "Blackmail / extortion",
+      "Threatened me",
+      "Shared my photo/information without permission"
+    ],
+    "description": "Punishes publishing, transmitting, facilitating, or generating material depicting children in sexually explicit acts in electronic or digital form.",
+    "nature_of_offence": "Cognizable & Non-Bailable",
+    "penalty": "First conviction: Imprisonment up to 5 years + ₹10 Lakh fine; Subsequent: up to 7 years",
+    "child_rights_protection": "Zero tolerance under Indian cyber law. Platforms are legally mandated to remove such content within 24 hours under IT Rules 2021.",
+    "statutory_reassurance": "You cannot be prosecuted for reporting or possessing evidence of coercion. Immediate takedown orders will be issued."
+  },
+  {
+    "id": "IT_ACT_SEC_66E",
+    "act": "Information Technology Act, 2000",
+    "section": "Section 66E",
+    "title": "Violation of Privacy (Intimate Image Abuse & Non-Consensual Leaks)",
+    "categories": [
+      "Private Photo / Video Pressure",
+      "Doxxing / Personal Information Leak",
+      "Blackmail / Extortion",
+      "Cyberbullying / Harassment"
+    ],
+    "tactics": [
+      "Shared my photo/information without permission",
+      "Blackmail / extortion",
+      "Threatened me"
+    ],
+    "description": "Criminalizes capturing, publishing, or transmitting the image of a private area of any person without their consent.",
+    "nature_of_offence": "Cognizable & Bailable",
+    "penalty": "Imprisonment up to 3 years or fine up to ₹2 Lakh, or both",
+    "child_rights_protection": "Protects digital bodily autonomy and privacy for all minors and citizens.",
+    "statutory_reassurance": "Leaking private images without consent is an illegal cyber crime regardless of how the person obtained them."
+  },
+  {
+    "id": "BNS_SEC_308_IPC_384",
+    "act": "Bharatiya Nyaya Sanhita, 2023 (Section 308) / Indian Penal Code (Section 384)",
+    "section": "BNS Section 308 / IPC Section 384",
+    "title": "Extortion & Reputational Blackmail (Sextortion / Intimidation)",
+    "categories": [
+      "Blackmail / Extortion",
+      "Threats",
+      "Threats / Intimidation",
+      "Cyberbullying / Harassment"
+    ],
+    "tactics": [
+      "Blackmail / extortion",
+      "Threatened me",
+      "Someone asked me to keep it secret"
+    ],
+    "description": "Intentionally putting any person in fear of any injury to body, mind, or reputation in order to dishonestly coerce money, media, or actions.",
+    "nature_of_offence": "Cognizable & Non-Bailable",
+    "penalty": "Imprisonment up to 3 to 7 years, or fine, or both",
+    "child_rights_protection": "Police Cyber Crime cells have expedited SOPs to trace extortionist IPs and prevent reputational exposure.",
+    "statutory_reassurance": "Blackmail is an illegal criminal intimidation offense. Responders will freeze extortion channels immediately."
+  },
+  {
+    "id": "BNS_SEC_78_IPC_354D",
+    "act": "Bharatiya Nyaya Sanhita, 2023 (Section 78) / Indian Penal Code (Section 354D)",
+    "section": "BNS Section 78 / IPC Section 354D",
+    "title": "Stalking & Continuous Cyberstalking",
+    "categories": [
+      "Stalking / Repeated Contact",
+      "Cyberbullying / Harassment",
+      "Threats"
+    ],
+    "tactics": [
+      "Repeated unwanted contact",
+      "Fake identity / impersonation",
+      "Asked me to meet them",
+      "Someone tried to isolate me"
+    ],
+    "description": "Follows, contacts or attempts to contact a woman/minor repeatedly despite a clear indication of disinterest, or monitors their internet, email or electronic communications.",
+    "nature_of_offence": "Cognizable & Bailable on first conviction; Non-Bailable on repeat",
+    "penalty": "First conviction: Imprisonment up to 3 years; Repeat: up to 5 years",
+    "child_rights_protection": "Enables immediate restraining orders and account suspension via law enforcement.",
+    "statutory_reassurance": "You have the absolute legal right to block and be free from persistent unwanted digital pursuit."
+  },
+  {
+    "id": "IT_ACT_SEC_66D",
+    "act": "Information Technology Act, 2000",
+    "section": "Section 66D",
+    "title": "Cheating by Personation using Computer Resource (Fake Accounts & Catfishing)",
+    "categories": [
+      "Impersonation / Fake Account",
+      "Phishing / Scam / Suspicious Link",
+      "Online Grooming"
+    ],
+    "tactics": [
+      "Fake identity / impersonation",
+      "Suspicious link",
+      "Manipulation / emotional pressure"
+    ],
+    "description": "Punishes anyone who by means of any communication device or computer resource cheats by personation (pretending to be another student, celebrity, scout, or friend).",
+    "nature_of_offence": "Cognizable",
+    "penalty": "Imprisonment up to 3 years and fine up to ₹1 Lakh",
+    "child_rights_protection": "Direct evidence preservation triggers platform metadata disclosure (IP logs, device IMEI).",
+    "statutory_reassurance": "The person pretending to be someone else committed cyber fraud under Indian law."
+  },
+  {
+    "id": "JJ_ACT_SEC_75",
+    "act": "Juvenile Justice (Care and Protection of Children) Act, 2015",
+    "section": "Section 75",
+    "title": "Punishment for Cruelty, Abuse or Severe Bullying to Child",
+    "categories": [
+      "Physical Abuse",
+      "Emotional / Verbal Abuse",
+      "Bullying",
+      "Neglect",
+      "Unsafe Home Environment",
+      "Unsafe School / College Environment"
+    ],
+    "tactics": [
+      "Threatened me",
+      "Someone tried to isolate me",
+      "Manipulation / emotional pressure"
+    ],
+    "description": "Applies to anyone having actual charge or control over a child who assaults, abandons, abuses, exposes or willfully neglects the child causing mental or physical suffering.",
+    "nature_of_offence": "Cognizable & Non-Bailable",
+    "penalty": "Imprisonment up to 3 years or fine of ₹1 Lakh, or both (up to 5 years if by institutional caretakers)",
+    "child_rights_protection": "Empowers Child Welfare Committees (CWC) to mandate safe relocation, foster care, or counseling without criminalising the minor.",
+    "statutory_reassurance": "Institutions and individuals are held legally accountable for failing to maintain a safe physical environment."
+  },
+  {
+    "id": "CONSTITUTION_ART_21",
+    "act": "Constitution of India",
+    "section": "Article 21 & Article 39(f)",
+    "title": "Fundamental Right to Life, Dignity & Personal Privacy (Puttaswamy Doctrine)",
+    "categories": [
+      "Online Grooming",
+      "Cyberbullying / Harassment",
+      "Doxxing / Personal Information Leak",
+      "Physical Abuse",
+      "Emotional / Verbal Abuse",
+      "Other"
+    ],
+    "tactics": [
+      "Shared my photo/information without permission",
+      "Asked for personal information"
+    ],
+    "description": "Guarantees that no person shall be deprived of their life or personal liberty. The Supreme Court established that the Right to Privacy is an intrinsic part of the Right to Life under Article 21.",
+    "nature_of_offence": "Constitutional Right",
+    "penalty": "Constitutional protection enforceable through High Courts (Art 226) and Supreme Court (Art 32)",
+    "child_rights_protection": "Mandates that children are given opportunities and facilities to develop in a healthy manner and in conditions of freedom and dignity.",
+    "statutory_reassurance": "Your privacy and safety are constitutionally guaranteed fundamental human rights."
+  }
+]
