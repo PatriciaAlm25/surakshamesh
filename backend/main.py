@@ -295,6 +295,32 @@ def translate_case(req: CaseSubmissionRequest):
         "assigned_organization": org
     }
 
+# ----------------- MULTILINGUAL VOICE ASSISTANT (SARVAM + GEMINI + SAFETY ENGINE) -----------------
+from assistant_pipeline import UnifiedVoiceAssistantPipeline, SUPPORTED_INDIC_LANGUAGES
+
+assistant_pipeline = UnifiedVoiceAssistantPipeline()
+
+class AssistantChatRequest(BaseModel):
+    message: str
+    language_code: Optional[str] = "hi-IN"
+
+@app.get("/api/assistant/languages")
+def get_supported_languages():
+    return {"languages": SUPPORTED_INDIC_LANGUAGES}
+
+@app.post("/api/assistant/chat")
+def assistant_chat(req: AssistantChatRequest):
+    return assistant_pipeline.process_text_turn(req.message, language_code=req.language_code)
+
+@app.post("/api/assistant/process-audio")
+async def assistant_process_audio(
+    audio_file: UploadFile = File(...),
+    language_code: str = Form("hi-IN")
+):
+    audio_bytes = await audio_file.read()
+    return assistant_pipeline.process_audio_turn(audio_bytes, language_code=language_code)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
