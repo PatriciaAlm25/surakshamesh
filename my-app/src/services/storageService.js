@@ -231,17 +231,54 @@ export const StorageService = {
   async createSupabaseCase(caseData) {
     try {
       const payload = {
-        report_text: caseData.report_text || caseData.rawDescription || '',
+        case_code: caseData.case_code || caseData.caseCode || `SM-2026-${Math.floor(10000 + Math.random() * 90000)}`,
+        environment: caseData.environment || 'Online',
+        category: caseData.category || caseData.primary_category || 'OTHER_CONCERN',
+        tactics_observed: caseData.tactics_observed || caseData.behavioralIndicators || [],
         platform: caseData.platform || 'Direct',
-        region: caseData.region || caseData.regionZone || 'General',
-        school_name: caseData.school_name || caseData.schoolName || 'St. Jude International Academy',
-        language: caseData.language || 'en',
+        platform_surface: caseData.platform_surface || caseData.platformSurface || 'Direct Message',
+        region: caseData.region || caseData.regionZone || (caseData.city ? `${caseData.city}, ${caseData.state || ''}` : 'General'),
+        city: caseData.city || '',
+        district: caseData.district || '',
+        state: caseData.state || '',
+        locality: caseData.locality || '',
+        school_name: caseData.school_name || caseData.institutionName || caseData.schoolName || 'General / Unspecified',
         age_bracket: caseData.age_bracket || caseData.childAgeBracket || 'UNDER_14',
+        affected_role: caseData.affected_role || caseData.affectedRole || 'School student',
+        perpetrator_relationship: caseData.perpetrator_relationship || caseData.relationship || 'Online stranger',
+        report_text: caseData.report_text || caseData.rawDescription || caseData.raw_story || '',
+        language: caseData.language || 'en',
+        evidence_type: caseData.evidence_type || caseData.hasEvidence || 'No',
+        timeframe: caseData.timeframe || 'In the last few days',
+        is_repeated: Boolean(caseData.is_repeated ?? caseData.isRepeated ?? false),
+        immediate_danger: caseData.immediate_danger || caseData.immediateDanger || 'No',
         risk_score: caseData.risk_score ?? caseData.aiRiskScore ?? 50,
+        risk_level: caseData.risk_level || caseData.aiRiskLevel || 'MEDIUM',
+        urgency_level: caseData.urgency_level || caseData.urgencyLevel || 'P2 - Moderate Review',
+        ai_summary: caseData.ai_summary || caseData.aiSummary || '',
+        recommended_actions: caseData.recommended_actions || (caseData.recommendedAction ? [caseData.recommendedAction] : []),
+        assigned_organization: caseData.assigned_organization || caseData.assignedOrganization || 'Childline 1098 & Cyber Cell (1930)',
         status: caseData.status || 'UNDER_REVIEW'
       };
+
       const { data, error } = await supabase.from('cases').insert([payload]).select();
-      if (error) throw error;
+      if (error) {
+        console.warn('Supabase full-schema insert note, trying baseline schema fallback:', error.message);
+        // Fallback for minimal baseline schema
+        const minimalPayload = {
+          report_text: payload.report_text,
+          platform: payload.platform,
+          region: payload.region,
+          school_name: payload.school_name,
+          language: payload.language,
+          age_bracket: payload.age_bracket,
+          risk_score: payload.risk_score,
+          status: payload.status
+        };
+        const { data: retryData, error: retryError } = await supabase.from('cases').insert([minimalPayload]).select();
+        if (retryError) throw retryError;
+        return retryData?.[0] || null;
+      }
       return data?.[0] || null;
     } catch (err) {
       console.error('Failed to create case in Supabase:', err);

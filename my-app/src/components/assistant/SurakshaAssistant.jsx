@@ -417,17 +417,17 @@ export default function SurakshaAssistant({ setActiveTab }) {
                       <span 
                         style={{ 
                           fontSize: '0.68rem', 
-                          padding: '2px 8px', 
+                          padding: '3px 10px', 
                           borderRadius: '999px',
-                          background: msg.riskLevel === 'HIGH' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.18)',
-                          border: msg.riskLevel === 'HIGH' ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(56, 189, 248, 0.4)',
-                          color: msg.riskLevel === 'HIGH' ? '#f87171' : '#38bdf8',
+                          background: msg.riskLevel === 'HIGH' ? '#fee2e2' : '#e0f2fe',
+                          border: msg.riskLevel === 'HIGH' ? '1.5px solid #ef4444' : '1.5px solid #0284c7',
+                          color: msg.riskLevel === 'HIGH' ? '#dc2626' : '#0369a1',
                           fontWeight: 700
                         }}
                       >
                         {msg.riskLevel || 'MEDIUM'} RISK ({msg.riskScore || 60}%)
                       </span>
-                      <span style={{ fontSize: '0.72rem', color: '#93c5fd', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '2px 8px', borderRadius: '6px' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#0369a1', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '3px 10px', borderRadius: '6px', fontWeight: 600 }}>
                         Context: {msg.situation}
                       </span>
                     </div>

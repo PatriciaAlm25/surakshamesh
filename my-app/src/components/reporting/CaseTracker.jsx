@@ -80,23 +80,23 @@ export default function CaseTracker({ setActiveTab }) {
         </form>
 
         {/* Quick Test Codes */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '12px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-          <span>Demo Case IDs:</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '14px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+          <span style={{ fontWeight: 600 }}>Demo Case IDs:</span>
           <button 
             onClick={() => handleSelectQuick('SM-2026-84291')}
-            style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.3)' }}
+            style={{ background: '#e0f2fe', color: '#0369a1', padding: '4px 10px', borderRadius: '6px', border: '1.5px solid #7dd3fc', fontWeight: 600, cursor: 'pointer' }}
           >
             SM-2026-84291 (Grooming / Review)
           </button>
           <button 
             onClick={() => handleSelectQuick('SM-2026-39102')}
-            style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(168, 85, 247, 0.3)' }}
+            style={{ background: '#f3e8ff', color: '#7e22ce', padding: '4px 10px', borderRadius: '6px', border: '1.5px solid #d8b4fe', fontWeight: 600, cursor: 'pointer' }}
           >
             SM-2026-39102 (Bullying / Assigned)
           </button>
           <button 
             onClick={() => handleSelectQuick('SM-2026-51204')}
-            style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+            style={{ background: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '6px', border: '1.5px solid #86efac', fontWeight: 600, cursor: 'pointer' }}
           >
             SM-2026-51204 (Phishing / Resolved)
           </button>
@@ -110,8 +110,8 @@ export default function CaseTracker({ setActiveTab }) {
           {/* Summary Overview Card */}
           <div className="glass-panel-glow" style={{ padding: '24px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tracking Case</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#38bdf8' }}>{activeCase.caseCode}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tracking Case</div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0284c7' }}>{activeCase.caseCode}</div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
                 Category: <strong>{activeCase.category.replace('_', ' ')}</strong> • Origin: {activeCase.platform}
               </div>
@@ -120,7 +120,7 @@ export default function CaseTracker({ setActiveTab }) {
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Assigned Support Unit:</div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#34d399' }}>
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#059669' }}>
                   {activeCase.assignedOrganization || 'Child Welfare Cell'}
                 </div>
               </div>
@@ -133,7 +133,7 @@ export default function CaseTracker({ setActiveTab }) {
           {/* Milestone Stepper Bar */}
           <div className="glass-panel" style={{ padding: '28px' }}>
             <h3 style={{ fontSize: '1.1rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Clock size={18} color="#38bdf8" /> Protection Workflow Progress
+              <Clock size={18} color="#0284c7" /> Protection Workflow Progress
             </h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', position: 'relative' }}>
@@ -147,8 +147,8 @@ export default function CaseTracker({ setActiveTab }) {
                     style={{
                       padding: '14px 10px',
                       borderRadius: '12px',
-                      background: isCurrent ? 'rgba(56, 189, 248, 0.15)' : (isPassed ? 'rgba(16, 185, 129, 0.08)' : 'rgba(15, 23, 42, 0.5)'),
-                      border: isCurrent ? '2px solid #38bdf8' : (isPassed ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)'),
+                      background: isCurrent ? '#e0f2fe' : (isPassed ? '#f0fdf4' : '#f8fafc'),
+                      border: isCurrent ? '2px solid #0284c7' : (isPassed ? '1.5px solid #10b981' : '1px solid var(--border-subtle)'),
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '6px'
@@ -164,7 +164,7 @@ export default function CaseTracker({ setActiveTab }) {
                         justifyContent: 'center', 
                         fontSize: '0.75rem', 
                         fontWeight: 700,
-                        background: isPassed ? '#10b981' : '#334155',
+                        background: isPassed ? '#10b981' : (isCurrent ? '#0284c7' : '#94a3b8'),
                         color: '#fff'
                       }}>
                         {isPassed ? '✓' : idx + 1}
@@ -172,7 +172,7 @@ export default function CaseTracker({ setActiveTab }) {
                       {isCurrent && <span className="badge-cyan" style={{ fontSize: '0.65rem' }}>Active</span>}
                     </div>
 
-                    <strong style={{ fontSize: '0.82rem', color: isPassed ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                    <strong style={{ fontSize: '0.82rem', color: isPassed || isCurrent ? 'var(--text-primary)' : 'var(--text-muted)' }}>
                       {stepItem.label}
                     </strong>
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', lineHeight: 1.3 }}>
@@ -195,12 +195,12 @@ export default function CaseTracker({ setActiveTab }) {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {activeCase.timeline?.map((evt, idx) => (
-                  <div key={idx} style={{ background: 'rgba(15, 23, 42, 0.7)', padding: '10px 14px', borderRadius: '10px', borderLeft: '3px solid #38bdf8' }}>
+                  <div key={idx} style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '10px', borderLeft: '3px solid #0284c7', border: '1.5px solid rgba(14, 116, 189, 0.15)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                       <span>{evt.actor}</span>
                       <span>{evt.time}</span>
                     </div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f8fafc', marginTop: '2px' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>
                       {evt.title}
                     </div>
                   </div>
@@ -217,9 +217,9 @@ export default function CaseTracker({ setActiveTab }) {
                 Your report is under care. An authorized child advocate from <strong>{activeCase.assignedOrganization}</strong> has been notified to provide confidential assistance.
               </p>
 
-              <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(56, 189, 248, 0.2)', fontSize: '0.8rem' }}>
-                <div style={{ fontWeight: 700, color: '#38bdf8', marginBottom: '2px' }}>Immediate Help:</div>
-                <div>Call Childline directly at <strong>1098</strong> (Toll-Free, 24/7) and quote Case ID <code>{activeCase.caseCode}</code>.</div>
+              <div style={{ background: '#eff6ff', padding: '14px', borderRadius: '10px', border: '1.5px solid #bfdbfe', fontSize: '0.82rem' }}>
+                <div style={{ fontWeight: 700, color: '#1d4ed8', marginBottom: '2px' }}>Immediate Help:</div>
+                <div style={{ color: '#1e293b' }}>Call Childline directly at <strong style={{ color: '#1d4ed8' }}>1098</strong> (Toll-Free, 24/7) and quote Case ID <code>{activeCase.caseCode}</code>.</div>
               </div>
 
               <button className="btn-secondary" style={{ marginTop: 'auto', width: '100%' }} onClick={() => setActiveTab('assistant')}>

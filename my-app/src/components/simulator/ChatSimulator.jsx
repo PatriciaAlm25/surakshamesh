@@ -252,11 +252,11 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           
           {/* Label Banner */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(15, 23, 42, 0.8)', padding: '6px 14px', borderRadius: '10px', fontSize: '0.75rem', border: '1px solid var(--border-subtle)' }}>
-            <span style={{ color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Info size={14} /> SIMULATED INSTAGRAM / WHATSAPP DM (DEMO ONLY)
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', padding: '8px 16px', borderRadius: '12px', fontSize: '0.78rem', border: '1.5px solid rgba(14, 116, 189, 0.2)', boxShadow: '0 2px 8px rgba(14, 116, 189, 0.05)' }}>
+            <span style={{ color: '#b45309', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Info size={15} color="#d97706" /> SIMULATED INSTAGRAM / WHATSAPP DM
             </span>
-            <span style={{ color: 'var(--text-muted)' }}>Strict Sandboxed Sandbox</span>
+            <span style={{ color: '#0284c7', fontWeight: 600 }}>Sandboxed Safe Demo</span>
           </div>
 
           {/* Chat Phone Frame */}
@@ -268,14 +268,14 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
                 <img 
                   src={currentScenario.contact.avatar} 
                   alt={currentScenario.contact.name}
-                  style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #38bdf8' }}
+                  style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #0284c7' }}
                 />
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.94rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {currentScenario.contact.name}
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399' }} title="Online" />
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#059669' }} title="Online" />
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '0.74rem', color: '#475569', fontWeight: 500 }}>
                     {currentScenario.contact.handle} • Unknown Contact
                   </div>
                 </div>
@@ -285,25 +285,25 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button 
                   onClick={handleBlockUser}
-                  style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  style={{ background: 'rgba(220, 38, 38, 0.1)', color: '#b91c1c', border: '1.5px solid rgba(220, 38, 38, 0.3)', padding: '6px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                   title="Block this contact"
                 >
-                  <UserX size={13} /> Block
+                  <UserX size={14} /> Block
                 </button>
               </div>
             </div>
 
             {/* Blocked Notification Overlay */}
             {isBlocked && (
-              <div style={{ background: 'rgba(239, 68, 68, 0.95)', color: '#fff', padding: '10px', fontSize: '0.8rem', textAlign: 'center', fontWeight: 600 }}>
+              <div style={{ background: '#dc2626', color: '#ffffff', padding: '10px', fontSize: '0.82rem', textAlign: 'center', fontWeight: 700 }}>
                 🚫 Contact {currentScenario.contact.name} has been blocked and muted.
               </div>
             )}
 
             {/* Messages Area */}
             <div className="chat-messages-area">
-              <div style={{ textAlign: 'center', margin: '8px 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                🔒 Messages are monitored by SURAKSHA MESH AI Layer
+              <div style={{ textAlign: 'center', margin: '8px 0', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                🔒 Monitored by SURAKSHA MESH Real-Time AI Radar
               </div>
 
               {activeMessages.map((msg, idx) => {
@@ -317,7 +317,7 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
                     {/* Stage Marker if available */}
                     {msg.stage && (
                       <div style={{ textAlign: 'center', margin: '6px 0' }}>
-                        <span style={{ fontSize: '0.68rem', padding: '2px 8px', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', borderRadius: '999px', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '3px 10px', background: 'rgba(124, 58, 237, 0.12)', color: '#7c3aed', borderRadius: '999px', border: '1px solid rgba(124, 58, 237, 0.3)' }}>
                           Stage: {msg.stage}
                         </span>
                       </div>
@@ -331,7 +331,7 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
                           {msg.text}
                           {/* Highlight malicious link if present */}
                           {msg.text.includes('http') && (
-                            <div style={{ marginTop: '6px', padding: '6px 10px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', borderRadius: '6px', fontSize: '0.75rem', color: '#fca5a5' }}>
+                            <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(220, 38, 38, 0.1)', border: '1.5px solid #dc2626', borderRadius: '8px', fontSize: '0.78rem', color: '#991b1b', fontWeight: 600 }}>
                               ⚠️ <strong>SURAKSHA Warning:</strong> Suspicious external domain detected. Do not click.
                             </div>
                           )}
@@ -345,29 +345,29 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
                             <div className="media-shield-box">
                               <img src={msg.media_url} alt="Blurred thumbnail" className="media-blur-layer" />
                               <div className="media-shield-content">
-                                <AlertTriangle size={26} color="#ef4444" style={{ marginBottom: '6px' }} />
-                                <strong style={{ fontSize: '0.8rem', color: '#f87171' }}>⚠️ Potentially Unsafe Media Intercepted</strong>
-                                <p style={{ fontSize: '0.7rem', color: '#cbd5e1', margin: '4px 0 8px 0' }}>
+                                <AlertTriangle size={28} color="#dc2626" style={{ marginBottom: '6px' }} />
+                                <strong style={{ fontSize: '0.84rem', color: '#991b1b', fontWeight: 800 }}>⚠️ Potentially Unsafe Media Intercepted</strong>
+                                <p style={{ fontSize: '0.74rem', color: '#334155', margin: '4px 0 10px 0', lineHeight: 1.4 }}>
                                   AI Shield detected possible explicit or sensitive imagery before display.
                                 </p>
-                                <div style={{ display: 'flex', gap: '6px' }}>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
                                   <button 
                                     onClick={() => handleTriggerSOS()} 
                                     className="btn-danger" 
-                                    style={{ padding: '4px 10px', fontSize: '0.7rem' }}
+                                    style={{ padding: '6px 12px', fontSize: '0.74rem' }}
                                   >
                                     Report SOS
                                   </button>
                                   <button 
                                     onClick={() => handleBlockUser()} 
                                     className="btn-secondary" 
-                                    style={{ padding: '4px 10px', fontSize: '0.7rem' }}
+                                    style={{ padding: '6px 12px', fontSize: '0.74rem' }}
                                   >
                                     Block Sender
                                   </button>
                                   <button 
                                     onClick={() => setRevealedMedia({ ...revealedMedia, [msg.id]: true })} 
-                                    style={{ background: 'transparent', color: '#94a3b8', fontSize: '0.68rem', padding: '2px 6px' }}
+                                    style={{ background: 'transparent', color: '#64748b', fontSize: '0.7rem', padding: '2px 6px', textDecoration: 'underline' }}
                                     title="View synthetic demo image"
                                   >
                                     [Demo Reveal]
@@ -378,7 +378,7 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
                           ) : (
                             <div>
                               <img src={msg.media_url} alt="Revealed" style={{ width: '100%', borderRadius: '10px', maxHeight: '180px', objectFit: 'cover' }} />
-                              <div style={{ fontSize: '0.68rem', color: '#f87171', marginTop: '4px' }}>
+                              <div style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '4px', fontWeight: 600 }}>
                                 [Warning: Synthetic safety test image]
                               </div>
                             </div>
@@ -387,7 +387,7 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
                       )}
 
                       {/* Meta */}
-                      <div className="message-meta">
+                      <div className="message-meta" style={{ color: isChild ? '#e0f2fe' : '#64748b' }}>
                         <span>{msg.timestamp}</span>
                       </div>
                     </div>
@@ -398,10 +398,10 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
               {/* Typing indicator */}
               {isTyping && (
                 <div className="message-bubble message-incoming" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'fit-content' }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8', animation: 'pulseGlow 1s infinite' }} />
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8', animation: 'pulseGlow 1s infinite 0.2s' }} />
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8', animation: 'pulseGlow 1s infinite 0.4s' }} />
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '4px' }}>{currentScenario.contact.name} is typing...</span>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#0284c7', animation: 'pulseGlow 1s infinite' }} />
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#0284c7', animation: 'pulseGlow 1s infinite 0.2s' }} />
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#0284c7', animation: 'pulseGlow 1s infinite 0.4s' }} />
+                  <span style={{ fontSize: '0.74rem', color: '#475569', marginLeft: '4px', fontWeight: 600 }}>{currentScenario.contact.name} is typing...</span>
                 </div>
               )}
 
@@ -416,28 +416,28 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
                 value={customInputText}
                 onChange={e => setCustomInputText(e.target.value)}
                 disabled={isBlocked}
-                style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
+                style={{ flex: 1, padding: '10px 14px', fontSize: '0.88rem', background: '#ffffff', borderRadius: '10px' }}
               />
               <button 
                 type="submit" 
                 className="btn-primary" 
-                style={{ padding: '8px 12px' }}
+                style={{ padding: '10px 14px', borderRadius: '10px' }}
                 disabled={isBlocked || !customInputText.trim()}
               >
-                <Send size={15} />
+                <Send size={16} />
               </button>
             </form>
 
             {/* AI Safety Bottom Control Bar */}
             <div className="chat-ai-status-bar">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Shield size={16} color={isAiEnabled ? (analysis.level === 'HIGH' ? '#ef4444' : '#38bdf8') : '#64748b'} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Shield size={16} color={isAiEnabled ? (analysis.level === 'HIGH' ? '#dc2626' : '#0284c7') : '#64748b'} />
                 <span>
                   {userAge < 14 ? (
-                    <strong style={{ color: '#38bdf8' }}>🛡️ AI SAFETY: ACTIVE (Protected Mode)</strong>
+                    <strong style={{ color: '#0284c7' }}>🛡️ AI SAFETY: ACTIVE (Protected Mode)</strong>
                   ) : (
-                    <strong>
-                      🛡️ AI SAFETY: {isAiEnabled ? <span style={{ color: '#34d399' }}>● ON</span> : <span style={{ color: '#64748b' }}>○ OFF</span>}
+                    <strong style={{ color: '#0f172a' }}>
+                      🛡️ AI SAFETY: {isAiEnabled ? <span style={{ color: '#047857', fontWeight: 800 }}>● ON</span> : <span style={{ color: '#64748b' }}>○ OFF</span>}
                     </strong>
                   )}
                 </span>
@@ -448,19 +448,20 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
                 <button
                   onClick={() => setIsAiEnabled(!isAiEnabled)}
                   style={{
-                    background: isAiEnabled ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                    color: isAiEnabled ? '#38bdf8' : 'var(--text-muted)',
+                    background: isAiEnabled ? 'rgba(14, 165, 233, 0.12)' : 'rgba(0, 0, 0, 0.05)',
+                    color: isAiEnabled ? '#0284c7' : 'var(--text-muted)',
                     border: '1px solid var(--border-subtle)',
-                    padding: '3px 10px',
-                    borderRadius: '6px',
-                    fontSize: '0.72rem',
-                    fontWeight: 600
+                    padding: '4px 12px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
                   }}
                 >
                   {isAiEnabled ? 'Disable AI' : 'Enable AI'}
                 </button>
               ) : (
-                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
                   🔒 Auto-Locked for minor protection
                 </span>
               )}
@@ -473,18 +474,18 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
           {/* Main Risk Score Card */}
-          <div className={`glass-panel ${analysis.level === 'HIGH' ? 'glass-panel-danger' : ''}`} style={{ padding: '20px' }}>
+          <div className={`glass-panel ${analysis.level === 'HIGH' ? 'glass-panel-danger' : ''}`} style={{ padding: '22px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
               <div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
                   Live Risk Assessment
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
-                  <span style={{ fontSize: '2rem', fontWeight: 800, color: analysis.level === 'HIGH' ? '#f87171' : (analysis.level === 'MEDIUM' ? '#fbbf24' : '#34d399') }}>
+                  <span style={{ fontSize: '2.2rem', fontWeight: 900, color: analysis.level === 'HIGH' ? '#dc2626' : (analysis.level === 'MEDIUM' ? '#d97706' : '#047857') }}>
                     {isAiEnabled ? `${analysis.score}/100` : '--/--'}
                   </span>
                   {isAiEnabled && (
-                    <span className={analysis.level === 'HIGH' ? 'badge-danger' : (analysis.level === 'MEDIUM' ? 'badge-warning' : 'badge-safe')}>
+                    <span className={analysis.level === 'HIGH' ? 'badge-danger' : (analysis.level === 'MEDIUM' ? 'badge-warning' : 'badge-safe')} style={{ fontSize: '0.8rem', padding: '4px 10px' }}>
                       {analysis.level} RISK
                     </span>
                   )}
@@ -492,15 +493,15 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
               </div>
 
               {isAiEnabled && analysis.level === 'HIGH' && (
-                <div className="animate-pulse-glow" style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <AlertTriangle size={20} color="#ef4444" />
+                <div className="animate-pulse-glow" style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <AlertTriangle size={22} color="#dc2626" />
                 </div>
               )}
             </div>
 
             {/* Risk Meter Bar */}
             {isAiEnabled && (
-              <div style={{ background: '#0a101d', height: '8px', borderRadius: '4px', overflow: 'hidden', marginBottom: '14px' }}>
+              <div style={{ background: '#e2e8f0', height: '8px', borderRadius: '4px', overflow: 'hidden', marginBottom: '14px' }}>
                 <div 
                   style={{ 
                     height: '100%', 
@@ -513,24 +514,24 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
             )}
 
             {/* AI Category */}
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+            <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
               Category: <strong style={{ color: 'var(--text-primary)' }}>{analysis.category.replace('_', ' ')}</strong>
             </div>
 
             {/* Detected Behavioral Indicators */}
             <div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 700 }}>
                 Detected Progression Indicators:
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {analysis.indicators.length > 0 ? (
                   analysis.indicators.map((ind, i) => (
-                    <span key={i} className="badge-danger" style={{ fontSize: '0.7rem' }}>
+                    <span key={i} className="badge-danger" style={{ fontSize: '0.74rem' }}>
                       ⚠️ {ind}
                     </span>
                   ))
                 ) : (
-                  <span className="badge-safe" style={{ fontSize: '0.7rem' }}>
+                  <span className="badge-safe" style={{ fontSize: '0.74rem' }}>
                     ✅ No harmful patterns detected
                   </span>
                 )}
@@ -540,31 +541,31 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
 
           {/* Recharts Risk Progression Timeline Graph */}
           {isAiEnabled && (
-            <div className="glass-panel" style={{ padding: '16px 20px' }}>
+            <div className="glass-panel" style={{ padding: '18px 20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--accent-cyan)' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0284c7' }}>
                   📈 Multi-Step Escalation Curve
                 </span>
-                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Progression Radar</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>Progression Radar</span>
               </div>
 
               <div style={{ width: '100%', height: 140 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={analysis.progression}>
-                    <XAxis dataKey="step" stroke="#475569" fontSize={10} tickLine={false} />
-                    <YAxis domain={[0, 100]} stroke="#475569" fontSize={10} tickLine={false} />
+                    <XAxis dataKey="step" stroke="#64748b" fontSize={11} tickLine={false} />
+                    <YAxis domain={[0, 100]} stroke="#64748b" fontSize={11} tickLine={false} />
                     <Tooltip 
-                      contentStyle={{ background: '#0f172a', border: '1px solid #38bdf8', borderRadius: '8px', fontSize: '0.75rem' }}
+                      contentStyle={{ background: '#ffffff', border: '1.5px solid #0ea5e9', borderRadius: '8px', fontSize: '0.78rem', color: '#0f172a', fontWeight: 700 }}
                       formatter={(val) => [`${val}% Risk`, 'Score']}
                     />
                     <ReferenceLine y={75} stroke="#ef4444" strokeDasharray="3 3" />
                     <Line 
                       type="monotone" 
                       dataKey="score" 
-                      stroke="#38bdf8" 
-                      strokeWidth={2.5} 
-                      dot={{ r: 4, fill: '#38bdf8' }}
-                      activeDot={{ r: 6, fill: '#ef4444' }}
+                      stroke="#0284c7" 
+                      strokeWidth={3} 
+                      dot={{ r: 4, fill: '#0284c7' }}
+                      activeDot={{ r: 6, fill: '#dc2626' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -573,19 +574,19 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
           )}
 
           {/* Action Recommendations Card */}
-          <div className="glass-panel" style={{ padding: '18px' }}>
-            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <ShieldCheck size={16} color="#34d399" />
+          <div className="glass-panel" style={{ padding: '20px' }}>
+            <h4 style={{ fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
+              <ShieldCheck size={18} color="#047857" />
               Recommended Protective Action
             </h4>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {analysis.recommendations.map((rec, i) => (
-                <div key={i} style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '8px 10px', borderRadius: '8px', borderLeft: '2px solid #38bdf8' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f8fafc' }}>
+                <div key={i} style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '10px', border: '1.5px solid rgba(14, 116, 189, 0.18)', borderLeft: '4px solid #0284c7' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>
                     {rec.action}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                  <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
                     {rec.detail}
                   </div>
                 </div>
@@ -596,7 +597,7 @@ export default function ChatSimulator({ userAge, setUserAge, setActiveTab }) {
             {analysis.level === 'HIGH' && (
               <button 
                 className="btn-danger" 
-                style={{ width: '100%', marginTop: '12px', fontSize: '0.82rem', padding: '10px' }}
+                style={{ width: '100%', marginTop: '14px', fontSize: '0.86rem', padding: '12px', borderRadius: '10px' }}
                 onClick={handleTriggerSOS}
               >
                 🚨 Escalate to Anonymous SOS Report
