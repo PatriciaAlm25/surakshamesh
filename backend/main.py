@@ -257,42 +257,72 @@ def analyze_conversation(req: ConversationAnalysisRequest):
     res = analyze_conversation_flow(req.messages, req.child_age)
     return res
 
-@app.post("/api/translate-case", response_model=CaseTranslatorResponse)
+from test_gemini_prompt import triage_invisible_sos
+
+class InvisibleSOSRequest(BaseModel):
+    environment: Optional[str] = "Online"
+    primary_category: Optional[str] = "Online Grooming"
+    tactics_observed: Optional[List[str]] = []
+    platform: Optional[str] = "Instagram"
+    platform_surface: Optional[str] = "Direct Message"
+    city: Optional[str] = ""
+    district: Optional[str] = ""
+    state: Optional[str] = ""
+    locality: Optional[str] = ""
+    age_bracket: Optional[str] = "14-17"
+    status_role: Optional[str] = "School student"
+    institution_name: Optional[str] = ""
+    relationship: Optional[str] = "Online stranger"
+    raw_story: str
+    language: Optional[str] = "en"
+    evidence_type: Optional[str] = "No"
+    timeframe: Optional[str] = "In the last few days"
+    is_repeated: Optional[bool] = False
+    immediate_danger: Optional[str] = "No"
+
+from ngo_service import match_ngos_by_location
+
+@app.post("/api/invisible-sos/triage")
+def triage_invisible_sos_endpoint(req: InvisibleSOSRequest):
+    data = req.dict()
+    result = triage_invisible_sos(data)
+    # Recommend NGOs as per location, address, and verified phone numbers
+    ngos = match_ngos_by_location(
+        city=req.city or "",
+        district=req.district or "",
+        state=req.state or "",
+        category=req.primary_category or "",
+        limit=4
+    )
+    result["recommended_ngos"] = ngos
+    return result
+
+@app.post("/api/translate-case")
 def translate_case(req: CaseSubmissionRequest):
-    code = f"SM-2026-{random.randint(10000, 99999)}"
-    text = req.raw_story
-    
-    indicators = []
-    if re.search(r"secret|tell.*parents|ghar|kisi ko mat", text, re.I):
-        indicators.append("Secrecy Demand")
-    if re.search(r"photo|pic|camera|video|tasveer", text, re.I):
-        indicators.append("Private Media Request")
-    if re.search(r"leak|post|hate|threat|ruin|mar", text, re.I):
-        indicators.append("Harassment / Extortion")
-    if re.search(r"address|school|where do you live|location", text, re.I):
-        indicators.append("Personal Info Solicitation")
-    if not indicators:
-        indicators.append("Uncomfortable Interaction")
-        
-    score = 45 + (len(indicators) * 15)
-    score = min(98, score)
-    
-    urgency = "P1 - Immediate Intervention" if score >= 75 else ("P2 - Moderate Review" if score >= 50 else "P3 - Standard Advisory")
-    
-    category = "ONLINE_GROOMING" if "Secrecy Demand" in indicators or "Private Media Request" in indicators else ("CYBERBULLYING" if "Harassment / Extortion" in indicators else "PRIVACY_CONCERN")
-    
-    org = "Childline & Cyber Cell Unit" if score >= 80 else "School Mental Health & Counseling Cell"
-    
+    # Backward-compatible wrapper calling triage_invisible_sos
+    payload = {
+        "environment": "Online",
+        "primary_category": req.category_hint or "OTHER_CONCERN",
+        "tactics_observed": [],
+        "platform": req.platform or "Online",
+        "platform_surface": "Direct Message",
+        "age_bracket": req.child_age_bracket or "UNDER_14",
+        "raw_story": req.raw_story,
+        "language": req.language or "en"
+    }
+    res = triage_invisible_sos(payload)
     return {
-        "case_code": code,
-        "category": category,
-        "urgency_level": urgency,
-        "risk_score": score,
-        "detected_indicators": indicators,
-        "evidence_snippets": [s.strip() for s in text.split(".") if len(s.strip()) > 5][:3],
-        "structured_summary": f"Child reported distress regarding {category.replace('_', ' ').lower()}. Natural testimony reveals {', '.join(indicators)}.",
-        "recommended_action": "Initiate confidential counselling outreach and preserve anonymous digital footprint evidence.",
-        "assigned_organization": org
+        "case_code": res.get("case_code"),
+        "category": res.get("primary_threat_cluster", "OTHER_CONCERN"),
+        "urgency_level": res.get("urgency_level", "P2 - Moderate Review"),
+        "risk_score": res.get("risk_score", 75),
+        "detected_indicators": res.get("safety_graph_nodes", {}).get("tactics", ["Online Distress"]),
+        "evidence_snippets": [s.strip() for s in req.raw_story.split(".") if len(s.strip()) > 5][:3],
+        "structured_summary": res.get("case_structured_summary", {}).get("headline", "Report processed"),
+        "recommended_action": "; ".join(res.get("recommended_actions", ["Preserve evidence"])),
+        "assigned_organization": res.get("assigned_organization", "Childline 1098"),
+        "safety_graph_nodes": res.get("safety_graph_nodes"),
+        "case_structured_summary": res.get("case_structured_summary")
     }
 
 # ----------------- MULTILINGUAL VOICE ASSISTANT (SARVAM + GEMINI + SAFETY ENGINE) -----------------
