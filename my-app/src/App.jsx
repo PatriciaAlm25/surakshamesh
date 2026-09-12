@@ -10,6 +10,7 @@ import SurakshaAssistant from './components/assistant/SurakshaAssistant';
 import ResponderDashboard from './components/responder/ResponderDashboard';
 import SafetyGraph from './components/graph/SafetyGraph';
 import SafeSchoolDashboard from './components/safeschool/SafeSchoolDashboard';
+import ConversationSafety from './components/safety/ConversationSafety';
 import { AlertCircle, Shield } from 'lucide-react';
 import './App.css';
 
@@ -88,6 +89,12 @@ export default function App() {
 
         {activeTab === 'safeschool' && (
           <SafeSchoolDashboard 
+            setActiveTab={setActiveTab} 
+          />
+        )}
+
+        {activeTab === 'safety' && (
+          <ConversationSafety 
             setActiveTab={setActiveTab} 
           />
         )}
