@@ -5,9 +5,7 @@ import HomeHub from './components/home/HomeHub';
 import ChatSimulator from './components/simulator/ChatSimulator';
 import ScreenshotSafety from './components/safety/ScreenshotSafety';
 import AnonymousReportWizard from './components/reporting/AnonymousReportWizard';
-import CaseTracker from './components/reporting/CaseTracker';
 import SurakshaAssistant from './components/assistant/SurakshaAssistant';
-import ResponderDashboard from './components/responder/ResponderDashboard';
 import SafetyGraph from './components/graph/SafetyGraph';
 import SafeSchoolDashboard from './components/safeschool/SafeSchoolDashboard';
 import ConversationSafety from './components/safety/ConversationSafety';
@@ -61,11 +59,6 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'tracker' && (
-          <CaseTracker 
-            setActiveTab={setActiveTab} 
-          />
-        )}
 
         {activeTab === 'assistant' && (
           <SurakshaAssistant 
@@ -73,11 +66,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'responder' && (
-          <ResponderDashboard 
-            setActiveTab={setActiveTab} 
-          />
-        )}
+
 
         {activeTab === 'graph' && (
           <SafetyGraph 
