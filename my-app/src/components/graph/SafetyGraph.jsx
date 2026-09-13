@@ -1017,13 +1017,6 @@ export default function SafetyGraph({ setActiveTab }) {
                 </div>
               )}
 
-              <button
-                className="btn-secondary"
-                style={{ width: '100%', marginTop: 'auto', fontSize: '0.8rem' }}
-                onClick={() => setActiveTab && setActiveTab('responder')}
-              >
-                🔍 View Cases in Responder Triage
-              </button>
             </>
           ) : (
             <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', marginTop: '40px' }}>

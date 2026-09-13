@@ -1534,13 +1534,6 @@ export default function AnonymousReportWizard({ setActiveTab }) {
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap', marginTop: '10px' }}>
             <button
-              className="btn-primary"
-              style={{ padding: '14px 28px', fontSize: '0.92rem' }}
-              onClick={() => setActiveTab('tracker')}
-            >
-              🔍 Track Status in Report Tracker
-            </button>
-            <button
               className="btn-secondary"
               style={{ padding: '14px 24px', fontSize: '0.92rem' }}
               onClick={() => {

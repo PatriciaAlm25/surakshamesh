@@ -76,29 +76,11 @@ export default function Navbar({ activeTab, setActiveTab, userAge, setUserAge })
             </li>
             <li>
               <button
-                className={`nav-item-btn ${activeTab === 'tracker' ? 'active' : ''}`}
-                onClick={() => setActiveTab('tracker')}
-              >
-                <Activity size={14} color="#0ea5e9" />
-                Track Case
-              </button>
-            </li>
-            <li>
-              <button
                 className={`nav-item-btn ${activeTab === 'assistant' ? 'active' : ''}`}
                 onClick={() => setActiveTab('assistant')}
               >
                 <MessageSquare size={14} color="#0ea5e9" />
                 AI Assistant
-              </button>
-            </li>
-            <li>
-              <button
-                className={`nav-item-btn ${activeTab === 'responder' ? 'active' : ''}`}
-                onClick={() => setActiveTab('responder')}
-              >
-                <Eye size={14} color="#d97706" />
-                Responder
               </button>
             </li>
             <li>

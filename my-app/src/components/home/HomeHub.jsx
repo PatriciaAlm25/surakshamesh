@@ -72,14 +72,7 @@ export default function HomeHub({ setActiveTab, userAge, setUserAge }) {
               <Lock size={18} />
               Anonymous Invisible SOS
             </button>
-            <button
-              className="btn-secondary"
-              style={{ fontSize: '1rem', padding: '14px 24px' }}
-              onClick={() => setActiveTab('responder')}
-            >
-              <Eye size={18} />
-              Responder Command Center
-            </button>
+
           </div>
 
           {/* Trust Guarantees */}
@@ -228,9 +221,7 @@ export default function HomeHub({ setActiveTab, userAge, setUserAge }) {
                 <span><strong>SafeSchool Regional Heatmap:</strong> Anonymized zone insights for proactive anti-bullying school workshops.</span>
               </li>
             </ul>
-            <button className="btn-secondary" style={{ marginTop: 'auto', width: '100%' }} onClick={() => setActiveTab('responder')}>
-              View Responder Portal <ArrowRight size={15} />
-            </button>
+
           </div>
 
         </div>
@@ -255,9 +246,8 @@ export default function HomeHub({ setActiveTab, userAge, setUserAge }) {
             { id: 'simulator', icon: <Sparkles size={22} color="#0ea5e9" />, color: '#0ea5e9', bg: 'rgba(14,165,233,0.1)', label: 'Centerpiece', title: 'AI Safety Lab (Chat)', desc: 'Interactive Instagram/WhatsApp DM simulator with age modes (<14 vs 14+), multi-day grooming escalation radar, and media shields.', cta: 'Test Live Simulator' },
             { id: 'ocr', icon: <FileSearch size={22} color="#8b5cf6" />, color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', title: 'OCR & Screenshot Lab', desc: 'Upload conversation screenshots or comment threads to test simulated OCR text extraction and multi-lingual risk scoring.', cta: 'Run Screenshot Analysis' },
             { id: 'report', icon: <Lock size={22} color="#059669" />, color: '#059669', bg: 'rgba(5,150,105,0.1)', title: 'Invisible SOS Reporting', desc: 'Zero-friction child reporting with AI Case Translator that extracts categories, urgency, and encrypted evidence tokens.', cta: 'File Anonymous Report' },
-            { id: 'tracker', icon: <Activity size={22} color="#0ea5e9" />, color: '#0ea5e9', bg: 'rgba(14,165,233,0.1)', title: 'Report Tracker', desc: 'Lookup active reports with Anonymous Case ID (e.g., SM-2026-84291) to track progress across support stages.', cta: 'Track Case ID' },
             { id: 'assistant', icon: <MessageSquare size={22} color="#0ea5e9" />, color: '#0ea5e9', bg: 'rgba(14,165,233,0.1)', title: 'Suraksha AI Copilot', desc: 'Safe conversational companion offering trauma-informed advice, safety checkups, and guided help in 11 Indian languages.', cta: 'Chat with Assistant' },
-            { id: 'responder', icon: <Eye size={22} color="#d97706" />, color: '#d97706', bg: 'rgba(217,119,6,0.1)', title: 'Responder Command Center', desc: 'Triage queue for verified NGOs, School Counselors, and Cyber Cell officers with automated priority classification.', cta: 'Open Responder Desk' },
+
             { id: 'graph', icon: <Network size={22} color="#8b5cf6" />, color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', title: 'Safety Graph Cluster', desc: 'Visualizes cross-platform predatory patterns and tactics across anonymized cases to spot serial grooming rings.', cta: 'Explore Graph' },
             { id: 'safeschool', icon: <MapPin size={22} color="#0ea5e9" />, color: '#0ea5e9', bg: 'rgba(14,165,233,0.1)', title: 'SafeSchool Regional Heatmap', desc: 'Aggregated geographical safety metrics and threat distributions across school zones with zero personal identity exposure.', cta: 'View SafeSchool Map' }
           ].map((card) => (
