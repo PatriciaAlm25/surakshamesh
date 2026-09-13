@@ -3,7 +3,7 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import HomeHub from './components/home/HomeHub';
 import ChatSimulator from './components/simulator/ChatSimulator';
-import ScreenshotAnalyzer from './components/ocr/ScreenshotAnalyzer';
+import ScreenshotSafety from './components/safety/ScreenshotSafety';
 import AnonymousReportWizard from './components/reporting/AnonymousReportWizard';
 import CaseTracker from './components/reporting/CaseTracker';
 import SurakshaAssistant from './components/assistant/SurakshaAssistant';
@@ -52,9 +52,7 @@ export default function App() {
         )}
 
         {activeTab === 'ocr' && (
-          <ScreenshotAnalyzer 
-            setActiveTab={setActiveTab} 
-          />
+          <ScreenshotSafety />
         )}
 
         {activeTab === 'report' && (

@@ -239,6 +239,57 @@ PATTERNS = {
             r"www\."
         ],
         "weight": 20
+    },
+
+    # --------------------------------------------------------
+    # CYBERBULLYING SIGNALS
+    # --------------------------------------------------------
+
+    "insult_name_calling": {
+        "patterns": [
+            r"\b(stupid|idiot|dumb|ugly|fat|loser|weird|freak|trash)\b",
+            r"\byou're so.*\b(stupid|idiot|dumb|ugly|fat|loser|weird|freak|trash)\b",
+            r"\byou are.*\b(stupid|idiot|dumb|ugly|fat|loser|weird|freak|trash)\b"
+        ],
+        "weight": 25
+    },
+
+    "repeated_humiliation": {
+        "patterns": [
+            r"\beveryone hates you\b",
+            r"\bnobody likes you\b",
+            r"\bno one likes you\b",
+            r"\beveryone should laugh at you\b",
+            r"\beveryone thinks you're\b",
+            r"\bwhy are you even here\b",
+            r"\byou're useless\b"
+        ],
+        "weight": 35
+    },
+
+    "threats": {
+        "patterns": [
+            r"\byou'll regret this\b",
+            r"\byou will regret this\b",
+            r"\bi'll hurt you\b",
+            r"\bi will hurt you\b",
+            r"\bwatch your back\b",
+            r"\bi'm going to get you\b"
+        ],
+        "weight": 40
+    },
+
+    "social_exclusion": {
+        "patterns": [
+            r"\bdon't talk to them\b",
+            r"\bnobody wants you here\b",
+            r"\bwe don't want you\b",
+            r"\bleave us alone\b",
+            r"\byou can't sit with us\b",
+            r"\byou shouldn't be here\b",
+            r"\byou should just disappear\b"
+        ],
+        "weight": 30
     }
 }
 

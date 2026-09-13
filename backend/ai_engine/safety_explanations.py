@@ -68,14 +68,30 @@ def generate_safety_explanation(detected_patterns):
         "cyberbullying": {
             "reason": "These messages may be trying to hurt, embarrass, or threaten someone.",
             "action": "Don't fight back. Save the messages, block/report the person, and tell a trusted adult."
+        },
+        "insult_name_calling": {
+            "reason": "These messages are using hurtful names or insults to put someone down.",
+            "action": "Don't argue back. Save the messages and block or report the person."
+        },
+        "repeated_humiliation": {
+            "reason": "Repeated jokes, insults, or embarrassing comments can become bullying when they are meant to hurt someone.",
+            "action": "You don't have to handle it alone. Save the evidence and tell a trusted adult."
+        },
+        "threats": {
+            "reason": "Threatening someone online is not okay, even if the person says they're joking.",
+            "action": "Don't respond to the threat. Save the message and tell a trusted adult."
+        },
+        "social_exclusion": {
+            "reason": "Repeatedly targeting someone or encouraging others to leave them out can be harmful.",
+            "action": "Talk to someone you trust and keep the messages as evidence."
         }
     }
     
     # Priority sorting based on weight or severity (roughly based on how bad they are)
     priority_order = [
-        "coercion_or_blackmail", "blackmail", "coercion", "sexualization", "offline_contact_attempt",
-        "credential_request", "secrecy_request", "image_request", "private_channel_migration",
-        "prize_scam", "reward_manipulation", "age_probing", "urgent_action", "suspicious_link",
+        "threats", "coercion_or_blackmail", "blackmail", "coercion", "sexualization", "offline_contact_attempt",
+        "credential_request", "secrecy_request", "repeated_humiliation", "social_exclusion", "image_request", "private_channel_migration",
+        "prize_scam", "reward_manipulation", "insult_name_calling", "age_probing", "urgent_action", "suspicious_link",
         "cyberbullying"
     ]
     
