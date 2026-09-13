@@ -9,7 +9,7 @@ export default function Footer() {
       padding: '40px 24px 20px 24px',
       marginTop: 'auto'
     }}>
-      <div style={{ maxWidth: '1380px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', marginBottom: '30px' }}>
+      <div style={{ maxWidth: '1380px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '30px', marginBottom: '30px' }}>
 
         {/* Col 1: Mission */}
         <div>
@@ -36,20 +36,20 @@ export default function Footer() {
           <h4 style={{ fontSize: '0.92rem', color: '#0284c7', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
             <PhoneCall size={16} /> Verified Emergency Helplines (India)
           </h4>
-          <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.84rem' }}>
-            <li style={{ display: 'flex', justifyContent: 'space-between', color: '#334155', borderBottom: '1px solid rgba(14, 116, 189, 0.12)', paddingBottom: '6px' }}>
+          <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.84rem', padding: 0 }}>
+            <li style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '4px', color: '#334155', borderBottom: '1px solid rgba(14, 116, 189, 0.12)', paddingBottom: '6px' }}>
               <span>Childline National Helpline:</span>
               <strong style={{ color: '#0284c7' }}>1098</strong>
             </li>
-            <li style={{ display: 'flex', justifyContent: 'space-between', color: '#334155', borderBottom: '1px solid rgba(14, 116, 189, 0.12)', paddingBottom: '6px' }}>
+            <li style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '4px', color: '#334155', borderBottom: '1px solid rgba(14, 116, 189, 0.12)', paddingBottom: '6px' }}>
               <span>National Cybercrime Helpline:</span>
               <strong style={{ color: '#dc2626' }}>1930</strong>
             </li>
-            <li style={{ display: 'flex', justifyContent: 'space-between', color: '#334155', borderBottom: '1px solid rgba(14, 116, 189, 0.12)', paddingBottom: '6px' }}>
+            <li style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '4px', color: '#334155', borderBottom: '1px solid rgba(14, 116, 189, 0.12)', paddingBottom: '6px' }}>
               <span>NCPCR e-BaalNidan:</span>
-              <strong style={{ color: '#7c3aed' }}>baalnidan.ncpcr.gov.in</strong>
+              <strong style={{ color: '#7c3aed', wordBreak: 'break-all' }}>baalnidan.ncpcr.gov.in</strong>
             </li>
-            <li style={{ display: 'flex', justifyContent: 'space-between', color: '#334155' }}>
+            <li style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '4px', color: '#334155' }}>
               <span>KIRAN Mental Health:</span>
               <strong style={{ color: '#059669' }}>1800-599-0019</strong>
             </li>
@@ -70,12 +70,12 @@ export default function Footer() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1380px', margin: '0 auto', paddingTop: '18px', borderTop: '1px solid rgba(14, 116, 189, 0.15)', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: '#64748b' }}>
+      <div style={{ maxWidth: '1380px', margin: '0 auto', paddingTop: '18px', borderTop: '1px solid rgba(14, 116, 189, 0.15)', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', fontSize: '0.78rem', color: '#64748b' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Heart size={12} color="#ef4444" fill="#ef4444" />
           © 2026 SURAKSHA MESH AI Protocol • National Child Online Safety Framework
         </div>
-        <div style={{ display: 'flex', gap: '16px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
           <span>Digital Guardrails</span>
           <span>•</span>
           <span>Support Ecosystem</span>

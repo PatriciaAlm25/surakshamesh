@@ -17,6 +17,8 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'en-IN', name: 'English', native: 'English', flag: '🇬🇧', welcome: "Hello! I'm your Suraksha Safety Assistant." }
 ];
 
+import { API_BASE_URL } from './apiConfig';
+
 let mediaRecorder = null;
 let audioChunks = [];
 let currentAudioPlayer = null;
@@ -131,7 +133,7 @@ export const VoiceAssistantService = {
         formData.append('audio_file', audioBlob, 'voice_query.wav');
         formData.append('language_code', languageCode);
 
-        const res = await fetch('http://localhost:8000/api/assistant/process-audio', {
+        const res = await fetch(`${API_BASE_URL}/api/assistant/process-audio`, {
           method: 'POST',
           body: formData
         });
@@ -139,7 +141,7 @@ export const VoiceAssistantService = {
           return await res.json();
         }
       } else if (text) {
-        const res = await fetch('http://localhost:8000/api/assistant/chat', {
+        const res = await fetch(`${API_BASE_URL}/api/assistant/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: text, language_code: languageCode })

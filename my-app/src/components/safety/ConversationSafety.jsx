@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Send, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { API_BASE_URL } from '../../services/apiConfig';
 
 export default function ConversationSafety() {
   const [messages, setMessages] = useState([]);
@@ -32,7 +33,7 @@ export default function ConversationSafety() {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:8000/api/analyze-conversation', {
+      const response = await fetch(`${API_BASE_URL}/api/analyze-conversation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: messages.map(m => m.text) })
@@ -96,11 +97,11 @@ export default function ConversationSafety() {
           )}
         </div>
         
-        <form onSubmit={handleSend} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+        <form onSubmit={handleSend} style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
           <select 
             value={currentSender} 
             onChange={(e) => setCurrentSender(e.target.value)}
-            style={{ padding: '12px 14px', borderRadius: '10px', border: '1.5px solid var(--border-medium)', background: '#ffffff', color: '#0f172a', fontWeight: 600, outline: 'none' }}
+            style={{ padding: '10px 14px', borderRadius: '10px', border: '1.5px solid var(--border-medium)', background: '#ffffff', color: '#0f172a', fontWeight: 600, outline: 'none', flex: '1 1 140px' }}
           >
             <option value="Alex">Alex (Contact)</option>
             <option value="Sam">Sam (Child)</option>
@@ -110,28 +111,28 @@ export default function ConversationSafety() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={`Type a message as ${currentSender}...`}
-            style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', border: '1.5px solid var(--border-medium)', background: '#ffffff', color: '#0f172a', fontSize: '0.92rem' }}
+            style={{ flex: '3 1 200px', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid var(--border-medium)', background: '#ffffff', color: '#0f172a', fontSize: '0.92rem' }}
           />
-          <button type="submit" className="btn-primary" style={{ padding: '0 24px', borderRadius: '10px' }}>
-            <Send size={18} /> Send
+          <button type="submit" className="btn-primary" style={{ padding: '10px 20px', borderRadius: '10px', flex: '1 1 auto' }}>
+            <Send size={16} /> Send
           </button>
         </form>
         
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
           <button 
             onClick={handleAnalyze} 
             disabled={messages.length === 0 || isAnalyzing}
             className="btn-primary"
             style={{ 
-              flex: 2, 
-              padding: '14px', 
+              flex: '2 1 200px', 
+              padding: '12px 16px', 
               borderRadius: '10px',
               fontWeight: 'bold',
               opacity: messages.length > 0 && !isAnalyzing ? 1 : 0.6,
               cursor: messages.length > 0 && !isAnalyzing ? 'pointer' : 'not-allowed'
             }}
           >
-            {isAnalyzing ? 'Analyzing conversation...' : '🔍 Analyze Conversation Safety'}
+            {isAnalyzing ? 'Analyzing conversation...' : '🔍 Analyze Safety'}
           </button>
 
           <button 
@@ -139,8 +140,8 @@ export default function ConversationSafety() {
             disabled={messages.length === 0}
             className="btn-secondary"
             style={{ 
-              flex: 1, 
-              padding: '14px', 
+              flex: '1 1 100px', 
+              padding: '12px 16px', 
               borderRadius: '10px',
               fontWeight: 'bold',
               color: '#dc2626',

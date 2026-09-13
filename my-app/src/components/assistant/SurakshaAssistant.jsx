@@ -219,47 +219,48 @@ export default function SurakshaAssistant({ setActiveTab }) {
   };
 
   return (
-    <div style={{ maxWidth: '980px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ maxWidth: '980px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       
       {/* Top Header & Multilingual Selector - Light Blue Themed */}
       <div 
         className="glass-panel" 
         style={{ 
-          padding: '22px 26px', 
+          padding: '16px 20px', 
           display: 'flex', 
           flexWrap: 'wrap', 
           justifyContent: 'space-between', 
           alignItems: 'center', 
-          gap: '16px',
+          gap: '12px',
           background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(224,242,254,0.9) 100%)',
           border: '1.5px solid rgba(14, 165, 233, 0.3)',
           boxShadow: '0 4px 24px rgba(14, 116, 189, 0.1)'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div 
             style={{ 
-              width: '48px', 
-              height: '48px', 
-              borderRadius: '14px', 
+              width: '42px', 
+              height: '42px', 
+              borderRadius: '12px', 
               background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(14, 165, 233, 0.4)'
+              boxShadow: '0 4px 16px rgba(14, 165, 233, 0.4)',
+              flexShrink: 0
             }}
           >
-            <Sparkles size={24} color="#ffffff" />
+            <Sparkles size={22} color="#ffffff" />
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #0ea5e9 0%, #2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                Suraksha Voice Assistant
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <h2 style={{ fontSize: 'clamp(1.15rem, 3vw, 1.4rem)', fontWeight: 800, letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #0ea5e9 0%, #2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                Suraksha AI Assistant
               </h2>
               <span 
                 style={{ 
-                  fontSize: '0.7rem', 
-                  padding: '3px 10px', 
+                  fontSize: '0.65rem', 
+                  padding: '2px 8px', 
                   borderRadius: '999px', 
                   background: 'rgba(14, 165, 233, 0.12)', 
                   border: '1px solid rgba(14, 165, 233, 0.4)', 
@@ -267,34 +268,35 @@ export default function SurakshaAssistant({ setActiveTab }) {
                   fontWeight: 700
                 }}
               >
-                Sarvam AI + Gemini AI
+                Sarvam + Gemini
               </span>
             </div>
-            <p style={{ fontSize: '0.82rem', color: '#334155', margin: 0, marginTop: '2px' }}>
-              Speak or type in any Indian language. Empathetic situation triage & audio safety guidance.
+            <p style={{ fontSize: '0.78rem', color: '#334155', margin: 0, marginTop: '2px' }}>
+              Speak or type in any Indian language. Empathetic triage & audio guidance.
             </p>
           </div>
         </div>
 
         {/* Language Selection & Audio Settings */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', width: '100%', maxWidth: 'fit-content' }}>
           <div 
             style={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '8px', 
+              gap: '6px', 
               background: 'rgba(241, 245, 249, 0.95)', 
-              padding: '6px 12px', 
-              borderRadius: '10px', 
+              padding: '5px 10px', 
+              borderRadius: '8px', 
               border: '1.5px solid rgba(14, 165, 233, 0.3)',
-              boxShadow: '0 2px 8px rgba(14, 116, 189, 0.08)'
+              boxShadow: '0 2px 8px rgba(14, 116, 189, 0.08)',
+              flex: '1 1 auto'
             }}
           >
-            <Globe size={16} color="#0ea5e9" />
+            <Globe size={15} color="#0ea5e9" />
             <select
               value={selectedLanguage}
               onChange={e => handleLanguageChange(e.target.value)}
-              style={{ background: 'transparent', border: 'none', color: '#0f172a', fontSize: '0.84rem', padding: '2px', cursor: 'pointer', outline: 'none' }}
+              style={{ background: 'transparent', border: 'none', color: '#0f172a', fontSize: '0.82rem', padding: '2px', cursor: 'pointer', outline: 'none', width: '100%' }}
             >
               {SUPPORTED_LANGUAGES.map((lang) => (
                 <option key={lang.code} value={lang.code} style={{ background: '#ffffff', color: '#0f172a' }}>
@@ -307,21 +309,22 @@ export default function SurakshaAssistant({ setActiveTab }) {
           <button
             onClick={() => setAutoPlayAudio(!autoPlayAudio)}
             style={{ 
-              padding: '8px 14px', 
-              fontSize: '0.8rem',
-              borderRadius: '10px',
+              padding: '6px 12px', 
+              fontSize: '0.78rem',
+              borderRadius: '8px',
               background: autoPlayAudio ? 'rgba(14, 165, 233, 0.12)' : 'rgba(241, 245, 249, 0.9)',
               border: '1.5px solid rgba(14, 165, 233, 0.35)',
               color: autoPlayAudio ? '#0284c7' : '#64748b',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '5px',
               fontWeight: 700,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              flexShrink: 0
             }}
             title="Toggle automatic audio read-aloud"
           >
-            {autoPlayAudio ? <Volume2 size={16} color="#0ea5e9" /> : <VolumeX size={16} color="#64748b" />}
+            {autoPlayAudio ? <Volume2 size={15} color="#0ea5e9" /> : <VolumeX size={15} color="#64748b" />}
             {autoPlayAudio ? 'Voice: ON' : 'Voice: OFF'}
           </button>
         </div>
@@ -332,51 +335,52 @@ export default function SurakshaAssistant({ setActiveTab }) {
         style={{ 
           background: 'linear-gradient(90deg, rgba(224,242,254,0.9) 0%, rgba(219,234,254,0.85) 100%)', 
           border: '1.5px solid rgba(14, 165, 233, 0.25)', 
-          borderRadius: '14px', 
-          padding: '12px 18px', 
+          borderRadius: '12px', 
+          padding: '10px 14px', 
           display: 'flex', 
           flexWrap: 'wrap', 
           alignItems: 'center', 
           justifyContent: 'space-between', 
-          gap: '8px', 
-          fontSize: '0.78rem',
+          gap: '6px', 
+          fontSize: '0.74rem',
           boxShadow: '0 2px 12px rgba(14, 116, 189, 0.08)'
         }}
       >
-        <span style={{ color: '#334155', fontWeight: 700 }}>AI Safety Pipeline:</span>
+        <span style={{ color: '#334155', fontWeight: 700 }}>AI Pipeline:</span>
         <span style={{ color: '#0284c7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#0ea5e9' }} /> 1. Sarvam AI (Speech)
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0ea5e9' }} /> 1. Speech (Sarvam)
         </span>
         <span style={{ color: '#94a3b8' }}>➔</span>
         <span style={{ color: '#2563eb', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#2563eb' }} /> 2. Gemini AI (Situation)
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2563eb' }} /> 2. Situation (Gemini)
         </span>
         <span style={{ color: '#94a3b8' }}>➔</span>
         <span style={{ color: '#7c3aed', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#8b5cf6' }} /> 3. Python Safety (Risk)
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#8b5cf6' }} /> 3. Risk (Safety)
         </span>
         <span style={{ color: '#94a3b8' }}>➔</span>
         <span style={{ color: '#0284c7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#0ea5e9' }} /> 4. Bulbul Audio Voice
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0ea5e9' }} /> 4. Audio (Bulbul)
         </span>
       </div>
 
       {/* Main Chat Conversation Window - Glowing Light Blue Frame */}
       <div 
         style={{ 
-          height: '540px', 
+          height: 'clamp(440px, 60vh, 540px)', 
           display: 'flex', 
           flexDirection: 'column', 
           overflow: 'hidden',
           background: 'radial-gradient(ellipse at 50% 0%, rgba(14, 165, 233, 0.08), transparent 70%), #f8fafc',
           border: '1.5px solid rgba(14, 165, 233, 0.25)',
-          borderRadius: '20px',
+          borderRadius: '18px',
           boxShadow: '0 8px 40px rgba(14, 116, 189, 0.12)'
         }}
       >
         
         {/* Messages Scroll Area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '22px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: '14px', WebkitOverflowScrolling: 'touch' }}>
+
           {messages.map((msg) => {
             const isBot = msg.sender === 'bot';
             const isPlaying = currentlyPlayingId === msg.id;

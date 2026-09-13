@@ -636,7 +636,7 @@ export default function SafetyGraph({ setActiveTab }) {
       </div>
 
       {/* 4 Defined Clusters Overview Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '12px' }}>
         
         <div className="glass-panel" style={{ padding: '12px 14px', borderLeft: `4px solid ${CLUSTER_TYPES.grooming.color}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
           <ShieldAlert color={CLUSTER_TYPES.grooming.color} size={20} />
@@ -749,10 +749,10 @@ export default function SafetyGraph({ setActiveTab }) {
       </div>
 
       {/* Main Interactive Graph & Node Inspector Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '20px' }}>
         
         {/* SVG Interactive Canvas */}
-        <div className="graph-viewport" style={{ position: 'relative', minHeight: '540px', background: '#030712', borderRadius: '14px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+        <div className="graph-viewport" style={{ position: 'relative', minHeight: '540px', background: '#030712', borderRadius: '14px', border: '1px solid var(--border-subtle)', overflowX: 'auto', overflowY: 'hidden' }}>
           
           {loading ? (
             <div style={{ height: '540px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', color: 'var(--text-muted)' }}>
@@ -768,7 +768,7 @@ export default function SafetyGraph({ setActiveTab }) {
               </button>
             </div>
           ) : (
-            <svg style={{ width: '100%', height: '540px', display: 'block' }}>
+            <svg style={{ width: '100%', minWidth: '820px', height: '540px', display: 'block' }}>
               
               {/* Background Column Guidelines */}
               <line x1={110} y1={20} x2={110} y2={520} stroke="rgba(255,255,255,0.03)" strokeWidth={1} strokeDasharray="4 4" />
@@ -1029,16 +1029,16 @@ export default function SafetyGraph({ setActiveTab }) {
 
       {/* Add New Case Modal */}
       {showAddModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '28px', borderRadius: '16px', border: '1px solid var(--border-subtle)' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '16px' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-subtle)' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
               <h3 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <PlusCircle color="#38bdf8" size={20} /> Insert Case into Supabase `cases` Table
+                <PlusCircle color="#38bdf8" size={20} /> Insert Case into DB
               </h3>
               <button 
                 onClick={() => setShowAddModal(false)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer', padding: '4px' }}
               >
                 ✕
               </button>
@@ -1058,7 +1058,7 @@ export default function SafetyGraph({ setActiveTab }) {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '4px' }}>Platform:</label>
                   <select className="select-input" value={newCasePlatform} onChange={e => setNewCasePlatform(e.target.value)} style={{ width: '100%' }}>
@@ -1089,11 +1089,11 @@ export default function SafetyGraph({ setActiveTab }) {
                     placeholder="Enter school name..."
                     value={newCaseSchool} 
                     onChange={e => setNewCaseSchool(e.target.value)} 
-                    style={{ width: '100%', padding: '10px', marginBottom: '12px' }} 
+                    style={{ width: '100%', padding: '10px' }} 
                   />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 130px), 1fr))', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '4px' }}>Language:</label>
                   <input type="text" className="input-field" value={newCaseLanguage} onChange={e => setNewCaseLanguage(e.target.value)} style={{ width: '100%' }} />

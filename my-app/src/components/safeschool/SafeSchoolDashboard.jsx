@@ -263,18 +263,18 @@ export default function SafeSchoolDashboard({ setActiveTab }) {
       </div>
 
       {/* Main Heatmap Grid: Leaflet Map (Left) + Region Detail Panel (Right) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '20px' }}>
         
         {/* Leaflet Heatmap Canvas Container */}
         <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 6px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '10px', padding: '0 6px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               <MapPin size={18} color="#0284c7" /> Coarse Region Heat Map (India)
             </div>
             
             {/* Heat Intensity Color Legend */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.72rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', fontSize: '0.72rem' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#dc2626', fontWeight: 700 }}>
                 ● Critical (≥85)
               </span>
@@ -291,7 +291,7 @@ export default function SafeSchoolDashboard({ setActiveTab }) {
           </div>
 
           {/* Interactive Leaflet React Map */}
-          <div style={{ height: '520px', width: '100%', borderRadius: '14px', overflow: 'hidden', border: '1.5px solid rgba(14, 116, 189, 0.2)', position: 'relative' }}>
+          <div style={{ height: 'clamp(360px, 50vh, 520px)', width: '100%', borderRadius: '14px', overflow: 'hidden', border: '1.5px solid rgba(14, 116, 189, 0.2)', position: 'relative' }}>
             {loading ? (
               <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', background: '#0b1329', color: '#94a3b8' }}>
                 <RefreshCw className="animate-spin" size={32} color="#0284c7" />
